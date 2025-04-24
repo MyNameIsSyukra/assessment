@@ -2,17 +2,18 @@ package repository
 
 import (
 	entities "assesment/entities"
+	"context"
 
 	"gorm.io/gorm"
 )
 
 type (
 	AssessmentRepository interface {
-	CreateAssessment(assesment *entities.Assessment) (*entities.Assessment, error)
-	GetAssessmentByID(id int) (*entities.Assessment, error)
+	CreateAssessment(ctx context.Context, tx *gorm.DB, assesment *entities.Assessment) (*entities.Assessment, error)
+	GetAssessmentByID(ctx context.Context, tx *gorm.DB, id string) (*entities.Assessment, error)
 	GetAllAssessments() ([]entities.Assessment, error)
-	UpdateAssessment(assesment *entities.Assessment) (*entities.Assessment, error)
-	DeleteAssessment(id int) error
+	UpdateAssessment(ctx context.Context, tx *gorm.DB,assesment *entities.Assessment) (*entities.Assessment, error)
+	DeleteAssessment(ctx context.Context, tx *gorm.DB,id string) error
 }
 	assesmentRepository struct {
 		Db *gorm.DB
@@ -23,16 +24,16 @@ func NewAssessmentRepository(db *gorm.DB) AssessmentRepository {
 	return &assesmentRepository{Db: db}
 } 
 
-func (assesmentRepo *assesmentRepository) CreateAssessment(assesment *entities.Assessment) (*entities.Assessment, error) {
+func (assesmentRepo *assesmentRepository) CreateAssessment(ctx context.Context, tx *gorm.DB,assesment *entities.Assessment) (*entities.Assessment, error) {
 	if err := assesmentRepo.Db.Create(assesment).Error; err != nil {
 		return nil, err
 	}
 	return assesment, nil
 }
 
-func (assesmentRepo *assesmentRepository) GetAssessmentByID(id int) (*entities.Assessment, error) {
+func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context, tx *gorm.DB,id string) (*entities.Assessment, error) {
 	var assesment entities.Assessment
-	if err := assesmentRepo.Db.First(&assesment, id).Error; err != nil {
+	if err := assesmentRepo.Db.Where("id = ?", id).First(&assesment).Error; err != nil {
 		return nil, err
 	}
 	return &assesment, nil
@@ -46,14 +47,14 @@ func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assess
 	return assessments, nil
 }
 
-func (assesmentRepo *assesmentRepository) UpdateAssessment(assesment *entities.Assessment) (*entities.Assessment, error) {
+func (assesmentRepo *assesmentRepository) UpdateAssessment(ctx context.Context, tx *gorm.DB,assesment *entities.Assessment) (*entities.Assessment, error) {
 	if err := assesmentRepo.Db.Save(assesment).Error; err != nil {
 		return nil, err
 	}
 	return assesment, nil
 }
 
-func (assesmentRepo *assesmentRepository) DeleteAssessment(id int) error {
+func (assesmentRepo *assesmentRepository) DeleteAssessment(ctx context.Context, tx *gorm.DB,id string) error {
 	var assesment entities.Assessment
 	if err := assesmentRepo.Db.Delete(&assesment, id).Error; err != nil {
 		return err
