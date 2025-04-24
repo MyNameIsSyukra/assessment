@@ -7,7 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-	type (
+
+type (
 	AssessmentController interface {
 		CreateAssessment(ctx *gin.Context)
 		GetAllAssessments(ctx *gin.Context) 

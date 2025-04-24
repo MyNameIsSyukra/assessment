@@ -7,8 +7,9 @@ import (
 
 type Choice struct {
 	gorm.Model
-	IdChoice     uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	Id     uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
 	ChoiceText   string    `json:"choice_text"`
 	QuestionId   uuid.UUID `gorm:"type:uuid" json:"question_id"`
-	isCorrect    bool      `json:"is_correct"`
+	IsCorrect    bool      `json:"is_correct"`
+	Question     Question  `gorm:"foreignKey:QuestionId;references:IdQuestion"`
 }

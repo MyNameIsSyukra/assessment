@@ -4,14 +4,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-type Evaluation struct{
-	gorm.Model
-	IdEvaluation uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
-	name string `json:"name"`
-	date_created time.Time `json:"date_created"`
-	start_time time.Time `json:"start_time"`
-	end_time time.Time `json:"end_time"`
+type Assessment struct{
+	Id uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
+	Name string `json:"name"`
+	CreatedAt time.Time `gorm:"colomn:created_at" json:"date_created"`
+	Start_time time.Time `json:"start_time"`
+	End_time time.Time `json:"end_time"`
+	UpdatedAt time.Time `gorm:"colomn:updated_at" json:"updated_at`
+	ClassId uuid.UUID `gorm:"type:uuid" json:"class_id"`
 }

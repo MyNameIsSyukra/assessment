@@ -9,7 +9,7 @@ import (
 func Migrate(db *gorm.DB) error{
 	db.AutoMigrate(&entities.Answer{})
 	db.AutoMigrate(&entities.Choice{})
-	db.AutoMigrate(&entities.Evaluation{})
+	db.AutoMigrate(&entities.Assessment{})
 	db.AutoMigrate(&entities.Question{})
 	
 	return nil
