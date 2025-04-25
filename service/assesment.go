@@ -58,7 +58,12 @@ func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context
 }
 
 func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
+	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.IdEvaluation)
+	if ass == nil {
+		return nil, err
+	}
 	assesmentEntity := entities.Assessment{
+		ID: ass.ID,
 		Name: assesment.Name,
 		CreatedAt: assesment.Date_created,
 		StartTime: assesment.Start_time,

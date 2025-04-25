@@ -20,3 +20,74 @@ type (
 		answerRepo repository.AnswerRepository
 	}
 )
+
+func NewAnswerService(answerRepo repository.AnswerRepository) AnswerService {
+	return &answerService{
+		answerRepo: answerRepo,
+	}
+}
+
+func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (*entities.Answer, error) {
+	answerEntity := entities.Answer{
+		QuestionID: answer.IdQuestion,
+		StudentID: answer.IdStudent,
+		ChoiceID: answer.IdChoice,
+	}
+
+	createdAnswer, err := answerService.answerRepo.CreateAnswer(ctx, nil, &answerEntity)
+	if err != nil {
+		return nil, err
+	}
+	return createdAnswer, nil
+}
+
+func (answerService *answerService) GetAllAnswers(ctx context.Context) ([]entities.Answer, error) {
+	if answers, err := answerService.answerRepo.GetAllAnswers(); err != nil {
+		return nil, err
+	} else {
+		return answers, nil
+	}
+}
+
+func (answerService *answerService) GetAnswerByID(ctx context.Context, id string) (*entities.Answer, error) {
+	answer, err := answerService.answerRepo.GetAnswerByID(ctx, nil, id)
+	if err != nil {
+		return nil, err
+	}
+	return answer, nil	
+}
+
+func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error) {
+	answ,err := answerService.answerRepo.GetAnswerByID(ctx, nil, answer.ID)
+	if answ == nil {
+		return nil, err
+	}
+	data := entities.Answer{
+		ID: answ.ID,
+		QuestionID: answer.IdQuestion,
+		StudentID: answer.IdStudent,
+		ChoiceID: answer.IdChoice,
+	}
+
+	updatedAnswer, err := answerService.answerRepo.UpdateAnswer(ctx, nil, &data)
+	if err != nil {
+		return nil, err
+	}
+	return updatedAnswer, nil
+}
+
+func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, questionID string) ([]entities.Answer, error) {
+	answers, err := answerService.answerRepo.GetAnswerByQuestionID(ctx, nil, questionID)
+	if err != nil {
+		return nil, err
+	}
+	return answers, nil
+}
+
+func (answerService *answerService) GetAnswerByStudentID(ctx context.Context, userID string) ([]entities.Answer, error) {
+	answers, err := answerService.answerRepo.GetAnswerByStudentID(ctx, nil, userID)
+	if err != nil {
+		return nil, err
+	}
+	return answers, nil
+}

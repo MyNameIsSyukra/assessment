@@ -39,9 +39,21 @@ func ProvideQuestionDependencies(injector *do.Injector){
 	})
 }
 
+func ProvideAnswerDependencies(injector *do.Injector){
+	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
+
+	answerRepository := repository.NewAnswerRepository(db)
+	answerService := service.NewAnswerService(answerRepository)
+
+	do.Provide(injector, func (i *do.Injector) (controller.AnswerController, error){
+		return controller.NewAnswerController(answerService),nil
+	})
+}
+
 
 func RegisterDependencies(injector *do.Injector) {
 	InitDatabase(injector)
 	ProvideEvaluationDependencies(injector)
 	ProvideQuestionDependencies(injector)
+	ProvideAnswerDependencies(injector)
 }

@@ -58,8 +58,7 @@ func (questionService *questionService) GetQuestionByID(ctx context.Context, id 
 }
 
 func (questionService *questionService) UpdateQuestion(ctx context.Context, question *dto.QuestionUpdateRequest) (*entities.Question, error) {
-	
-	questionEntity,err := questionService.questionRepo.GetQuestionByID(ctx, nil, question.Id)
+	questionEntity, err := questionService.questionRepo.GetQuestionByID(ctx, nil, question.Id)
 	if questionEntity == nil {
 		return nil, fmt.Errorf("question not found")
 	}
