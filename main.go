@@ -17,8 +17,8 @@ import (
 func args(db *gorm.DB) bool {
     if len(os.Args) > 1 {
         if (os.Args[1] == "migrate") {
-            print("argadasds")
             migration.Migrate(db)
+			print("Migration completed successfully")
             return false
         }
     }

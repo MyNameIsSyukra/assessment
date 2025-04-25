@@ -30,8 +30,8 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 	assesmentEntity := entities.Assessment{
 		Name: assesment.Name,
 		CreatedAt: assesment.Date_created,
-		Start_time: assesment.Start_time,
-		End_time: assesment.End_time,
+		StartTime: assesment.Start_time,
+		EndTime: assesment.End_time,
 	}
 	
 	createdAssessment, err := assesmentService.assesmentRepo.CreateAssessment(ctx, nil, &assesmentEntity)
@@ -61,8 +61,8 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 	assesmentEntity := entities.Assessment{
 		Name: assesment.Name,
 		CreatedAt: assesment.Date_created,
-		Start_time: assesment.Start_time,
-		End_time: assesment.End_time,
+		StartTime: assesment.Start_time,
+		EndTime: assesment.End_time,
 	}
 	
 	updatedAssessment, err := assesmentService.assesmentRepo.UpdateAssessment(ctx, nil, &assesmentEntity)

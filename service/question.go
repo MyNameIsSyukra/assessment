@@ -31,7 +31,7 @@ func NewQuestionService(questionRepo repository.QuestionRepository) QuestionServ
 func (questionService *questionService) CreateQuestion(ctx context.Context, question *dto.QuestionCreateRequest) (*entities.Question, error) {
 		questionEntity := entities.Question{
 			QuestionText: question.QuestionText,
-			EvaluationId: question.EvaluationId,
+			EvaluationID: question.EvaluationID,
 		}
 		
 		createdQuestion, err := questionService.questionRepo.CreateQuestion(ctx, nil, &questionEntity)
@@ -65,7 +65,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	}
 	data := entities.Question{
 		QuestionText: question.QuestionText,
-		EvaluationId: question.EvaluationId,
+		EvaluationID: question.EvaluationID,
 	}
 	updatedQuestion, err := questionService.questionRepo.UpdateQuestion(ctx, nil, &data)
 	if err != nil {
