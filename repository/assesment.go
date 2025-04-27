@@ -48,15 +48,18 @@ func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assess
 }
 
 func (assesmentRepo *assesmentRepository) UpdateAssessment(ctx context.Context, tx *gorm.DB,assesment *entities.Assessment) (*entities.Assessment, error) {
-	if err := assesmentRepo.Db.Save(assesment).Error; err != nil {
+	if err := assesmentRepo.Db.Where("id = ?", assesment.ID).Where("class_id",assesment.ClassID).Updates(assesment).Error; err != nil {
 		return nil, err
 	}
 	return assesment, nil
 }
 
 func (assesmentRepo *assesmentRepository) DeleteAssessment(ctx context.Context, tx *gorm.DB,id string) error {
-	var assesment entities.Assessment
-	if err := assesmentRepo.Db.Delete(&assesment, id).Error; err != nil {
+	asses,err := assesmentRepo.GetAssessmentByID(ctx, nil, id)
+	if err != nil {
+		return err
+	}
+	if err := assesmentRepo.Db.Delete(&entities.Assessment{},"id",asses.ID).Error; err != nil {
 		return err
 	}
 	return nil

@@ -18,5 +18,10 @@ type Choice struct {
     ChoiceText string    `json:"choice_text"`
     QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id"`
     IsCorrect  bool      `json:"is_correct"`
-    Question   Question  `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
+
+    // Relasi ke Question
+    Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
+
+    // Relasi ke Answer (Choice has many Answers)
+    Answers []Answer `gorm:"foreignKey:ChoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers"`
 }

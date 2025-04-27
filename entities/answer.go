@@ -22,6 +22,10 @@ type Answer struct {
     ChoiceID   uuid.UUID `gorm:"type:uuid" json:"choice_id"`
     StudentID  uuid.UUID `gorm:"type:uuid" json:"student_id"`
     CreatedAt  time.Time `json:"created_at"`
-    Question   Question  `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
-    Choice     Choice    `gorm:"foreignKey:ChoiceID;references:ID" json:"choice"`
+
+    // Relasi ke Question
+    Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
+
+    // Relasi ke Choice
+    Choice Choice `gorm:"foreignKey:ChoiceID;references:ID" json:"choice"`
 }

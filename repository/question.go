@@ -29,6 +29,7 @@ func (questionRepo *questionRepository) CreateQuestion(ctx context.Context, tx *
 	if err := questionRepo.Db.Create(question).Error; err != nil {
 		return nil, err
 	}
+	
 	return question, nil
 }
 
@@ -49,7 +50,10 @@ func (questionRepo *questionRepository) GetAllQuestions() ([]entities.Question, 
 }
 
 func (questionRepo *questionRepository) UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error) {
-	if err := questionRepo.Db.Save(question).Error; err != nil {
+	// if err := questionRepo.Db.Save(question).Error; err != nil {
+	// 	return nil, err
+	// }
+	if err := questionRepo.Db.Where("id = ?",question.ID).Where("evaluation_id",question.EvaluationID).Updates(question).Error; err != nil {
 		return nil, err
 	}
 	return question, nil

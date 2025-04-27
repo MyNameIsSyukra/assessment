@@ -9,7 +9,7 @@ import (
 
 type (
 	AssessmentService interface {
-		CreateAssessment(ctx context.Context,assesment *dto.AssessmentCreateRequest) (*entities.Assessment, error)
+		CreateAssessment(ctx context.Context,assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error)
 		GetAllAssessments(ctx context.Context)([]entities.Assessment, error)
 		GetAssessmentByID(ctx context.Context, id string) (*entities.Assessment, error)
 		UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error)
@@ -26,8 +26,9 @@ func NewAssessmentService(assesmentRepo repository.AssessmentRepository) Assessm
 	}
 }
 
-func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, assesment *dto.AssessmentCreateRequest) (*entities.Assessment, error) {
+func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error) {
 	assesmentEntity := entities.Assessment{
+		ClassID: assesment.ClassId,
 		Name: assesment.Name,
 		CreatedAt: assesment.Date_created,
 		StartTime: assesment.Start_time,
@@ -36,9 +37,18 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 	
 	createdAssessment, err := assesmentService.assesmentRepo.CreateAssessment(ctx, nil, &assesmentEntity)
 	if err != nil {
-		return nil, err
+		return dto.AssessmentCreateResponse{}, err
 	}
-	return createdAssessment, nil	
+	res := dto.AssessmentCreateResponse{
+		ID: createdAssessment.ID,
+		Name: createdAssessment.Name,
+		ClassId: createdAssessment.ClassID,
+		Start_time: createdAssessment.StartTime,
+		End_time: createdAssessment.EndTime,
+		Date_created: createdAssessment.CreatedAt,
+		Updated_At: createdAssessment.UpdatedAt,
+	}
+	return res, nil	
 }
 
 func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context) ([]entities.Assessment, error) {
@@ -59,11 +69,13 @@ func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context
 
 func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
 	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.IdEvaluation)
+	print(ass)
 	if ass == nil {
 		return nil, err
 	}
 	assesmentEntity := entities.Assessment{
 		ID: ass.ID,
+		ClassID: ass.ClassID,
 		Name: assesment.Name,
 		CreatedAt: assesment.Date_created,
 		StartTime: assesment.Start_time,

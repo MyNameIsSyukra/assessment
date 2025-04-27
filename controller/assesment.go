@@ -85,6 +85,6 @@ func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Contex
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusNoContent, nil)
+	ctx.JSON(http.StatusOK, "Deleted successfully")
 }
 

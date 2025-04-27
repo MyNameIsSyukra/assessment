@@ -24,4 +24,7 @@ type Assessment struct {
     EndTime   time.Time `json:"end_time"`
     UpdatedAt time.Time `json:"updated_at"`
     ClassID   uuid.UUID `gorm:"type:uuid" json:"class_id"`
+
+    // Relasi ke Question (Assessment has many Questions)
+    Questions []Question `gorm:"foreignKey:EvaluationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"questions"`
 }

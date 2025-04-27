@@ -49,7 +49,10 @@ func (answerRepo *answerRepository) GetAllAnswers() ([]entities.Answer, error) {
 }
 
 func (answerRepo *answerRepository) UpdateAnswer(ctx context.Context, tx *gorm.DB, answer *entities.Answer) (*entities.Answer, error) {
-	if err := answerRepo.Db.Save(answer).Error; err != nil {
+	// if err := answerRepo.Db.Save(answer).Error; err != nil {
+	// 	return nil, err
+	// }
+	if err := answerRepo.Db.Where("id = ?",answer.ID).Updates(answer).Error; err != nil {
 		return nil, err
 	}
 	return answer, nil
