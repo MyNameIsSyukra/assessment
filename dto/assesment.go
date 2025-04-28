@@ -1,6 +1,7 @@
 package dto
 
 import (
+	entities "assesment/entities"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,9 @@ type AssessmentCreateResponse struct {
 	Updated_At time.Time `json:"updated_at"`
 }
 
+type GetAllAssessmentsResponse struct {
+	Assessments []entities.Assessment `json:"assessments"`
+}
 
 type AssessmentUpdateRequest struct {
 	IdEvaluation string `json:"id"`

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // type Answer struct {
@@ -22,7 +23,8 @@ type Answer struct {
     ChoiceID   uuid.UUID `gorm:"type:uuid" json:"choice_id"`
     StudentID  uuid.UUID `gorm:"type:uuid" json:"student_id"`
     CreatedAt  time.Time `json:"created_at"`
-
+    UpdatedAt  time.Time `json:"updated_at"`
+    DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
     // Relasi ke Question
     Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
 

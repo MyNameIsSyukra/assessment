@@ -9,12 +9,12 @@ import (
 
 type (
 	AnswerService interface {
-		CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (*entities.Answer, error)
+		CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (dto.AnswerResponse, error)
 		GetAllAnswers(ctx context.Context) ([]entities.Answer, error)
 		GetAnswerByID(ctx context.Context, id string) (*entities.Answer, error)
 		UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error)
 		GetAnswerByQuestionID(ctx context.Context, questionID string) ([]entities.Answer, error)
-		GetAnswerByStudentID(ctx context.Context, userID string) ([]entities.Answer, error)
+		GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
 	}
 	answerService struct {
 		answerRepo repository.AnswerRepository
@@ -27,7 +27,7 @@ func NewAnswerService(answerRepo repository.AnswerRepository) AnswerService {
 	}
 }
 
-func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (*entities.Answer, error) {
+func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (dto.AnswerResponse, error) {
 	answerEntity := entities.Answer{
 		QuestionID: answer.IdQuestion,
 		StudentID: answer.IdStudent,
@@ -36,7 +36,7 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 
 	createdAnswer, err := answerService.answerRepo.CreateAnswer(ctx, nil, &answerEntity)
 	if err != nil {
-		return nil, err
+		return dto.AnswerResponse{}, err
 	}
 	return createdAnswer, nil
 }
@@ -84,8 +84,8 @@ func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, q
 	return answers, nil
 }
 
-func (answerService *answerService) GetAnswerByStudentID(ctx context.Context, userID string) ([]entities.Answer, error) {
-	answers, err := answerService.answerRepo.GetAnswerByStudentID(ctx, nil, userID)
+func (answerService *answerService) GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
+	answers, err := answerService.answerRepo.GetAnswerByStudentID(ctx, nil, id)
 	if err != nil {
 		return nil, err
 	}

@@ -16,6 +16,7 @@ type (
 		UpdateQuestion(ctx *gin.Context)
 		DeleteQuestion(ctx *gin.Context)
 		GetQuestionsByAssessmentID(ctx *gin.Context)
+		CreateAllQuestion(ctx *gin.Context)
 	}
 	questionController struct {
 		questionService service.QuestionService
@@ -27,6 +28,27 @@ func NewQuestionController(questionService service.QuestionService) QuestionCont
 		questionService: questionService,
 	}
 }
+
+
+func (questionController *questionController) CreateAllQuestion(ctx *gin.Context) {
+	var request []dto.CreateAllQuestionRequest
+	var response []dto.QuestionResponse
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, choice := range request {
+		data, err := questionController.questionService.CreatePertanyaan(ctx.Request.Context(), choice)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		response = append(response, data)	
+	}
+	ctx.JSON(http.StatusCreated, response)
+}
+
 
 func (questionController *questionController) CreateQuestion(ctx *gin.Context) {
 	var request dto.QuestionCreateRequest
@@ -70,7 +92,7 @@ func (questionController *questionController) UpdateQuestion(ctx *gin.Context) {
 		return
 	}
 	request.Id = id
-
+	// fmt.Print(request)
 	question, err := questionController.questionService.UpdateQuestion(ctx.Request.Context(), &request)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -86,11 +108,12 @@ func (questionController *questionController) DeleteQuestion(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusNoContent, nil)
+	ctx.JSON(http.StatusOK, "Deleted successfully")
 }
 
 func (questionController *questionController) GetQuestionsByAssessmentID(ctx *gin.Context) {
 	id := ctx.Param("id")
+	print(id)
 	questions, err := questionController.questionService.GetQuestionsByAssessmentID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

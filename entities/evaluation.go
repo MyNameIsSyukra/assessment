@@ -19,12 +19,12 @@ import (
 type Assessment struct {
     ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
     Name      string    `json:"name"`
-    CreatedAt time.Time `json:"date_created"`
     StartTime time.Time `json:"start_time"`
     EndTime   time.Time `json:"end_time"`
+    CreatedAt time.Time `json:"date_created"`
     UpdatedAt time.Time `json:"updated_at"`
     ClassID   uuid.UUID `gorm:"type:uuid" json:"class_id"`
 
     // Relasi ke Question (Assessment has many Questions)
-    Questions []Question `gorm:"foreignKey:EvaluationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"questions"`
+    Questions []Question `gorm:"foreignKey:EvaluationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }

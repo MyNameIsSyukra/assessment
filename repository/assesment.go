@@ -44,6 +44,7 @@ func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assess
 	if err := assesmentRepo.Db.Find(&assessments).Error; err != nil {
 		return nil, err
 	}
+
 	return assessments, nil
 }
 
@@ -55,11 +56,7 @@ func (assesmentRepo *assesmentRepository) UpdateAssessment(ctx context.Context, 
 }
 
 func (assesmentRepo *assesmentRepository) DeleteAssessment(ctx context.Context, tx *gorm.DB,id string) error {
-	asses,err := assesmentRepo.GetAssessmentByID(ctx, nil, id)
-	if err != nil {
-		return err
-	}
-	if err := assesmentRepo.Db.Delete(&entities.Assessment{},"id",asses.ID).Error; err != nil {
+	if err := assesmentRepo.Db.Delete(&entities.Assessment{},"id",id).Error; err != nil {
 		return err
 	}
 	return nil

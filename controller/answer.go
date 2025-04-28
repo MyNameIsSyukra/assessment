@@ -89,8 +89,12 @@ func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context
 }
 
 func (answerController *answerController) GetAnswerByStudentID(ctx *gin.Context) {
-	studentID := ctx.Param("student_id")
-	answers, err := answerController.answerService.GetAnswerByStudentID(ctx.Request.Context(), studentID)
+	var req dto.GetAnswerByStudentIDRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	answers, err := answerController.answerService.GetAnswerByStudentID(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

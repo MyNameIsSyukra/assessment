@@ -1,7 +1,10 @@
 package entities
 
 import (
+	"time"
+
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // type Choice struct {
@@ -18,10 +21,14 @@ type Choice struct {
     ChoiceText string    `json:"choice_text"`
     QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id"`
     IsCorrect  bool      `json:"is_correct"`
+    CreatedAt  time.Time    `json:"created_at"`
+    UpdatedAt  time.Time    `json:"updated_at"`
+    DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+
 
     // Relasi ke Question
-    Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
+    Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"-"`
 
     // Relasi ke Answer (Choice has many Answers)
-    Answers []Answer `gorm:"foreignKey:ChoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers"`
+    Answers []Answer `gorm:"foreignKey:ChoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }

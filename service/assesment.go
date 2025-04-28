@@ -10,7 +10,7 @@ import (
 type (
 	AssessmentService interface {
 		CreateAssessment(ctx context.Context,assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error)
-		GetAllAssessments(ctx context.Context)([]entities.Assessment, error)
+		GetAllAssessments(ctx context.Context)(dto.GetAllAssessmentsResponse, error)
 		GetAssessmentByID(ctx context.Context, id string) (*entities.Assessment, error)
 		UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error)
 		DeleteAssessment(ctx context.Context, id string) error
@@ -51,12 +51,14 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 	return res, nil	
 }
 
-func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context) ([]entities.Assessment, error) {
+func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context) (dto.GetAllAssessmentsResponse, error) {
 	assessments, err := assesmentService.assesmentRepo.GetAllAssessments()
 	if err != nil {
-		return nil, err
+		return dto.GetAllAssessmentsResponse{}, err
 	}
-	return assessments, nil
+	return dto.GetAllAssessmentsResponse{
+		Assessments: assessments,
+	}, nil
 }
 
 func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context, id string) (*entities.Assessment,error){
@@ -90,7 +92,12 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 }
 
 func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context, id string) error {
-	err := assesmentService.assesmentRepo.DeleteAssessment(ctx, nil, id)
+	asses,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, id)
+	if err != nil {
+		return err
+	}
+
+	err = assesmentService.assesmentRepo.DeleteAssessment(ctx, nil,asses.ID.String())
 	if err != nil {
 		return err
 	}
