@@ -10,4 +10,5 @@ func RegisterRoutes(server *gin.Engine, injector *do.Injector) {
 	Question(server, injector)
 	Choice(server, injector)
 	Answer(server, injector)
+	Submission(server, injector)
 }

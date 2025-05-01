@@ -30,7 +30,7 @@ func NewAnswerService(answerRepo repository.AnswerRepository) AnswerService {
 func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (dto.AnswerResponse, error) {
 	answerEntity := entities.Answer{
 		QuestionID: answer.IdQuestion,
-		StudentID: answer.IdStudent,
+		SubmissionID: answer.SubmisiionID,
 		ChoiceID: answer.IdChoice,
 	}
 
@@ -65,7 +65,7 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 	data := entities.Answer{
 		ID: answ.ID,
 		QuestionID: answer.IdQuestion,
-		StudentID: answer.IdStudent,
+		SubmissionID: answ.SubmissionID,
 		ChoiceID: answer.IdChoice,
 	}
 

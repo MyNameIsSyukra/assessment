@@ -9,7 +9,7 @@ import (
 
 type AnswerCreateRequest struct {
 	IdQuestion uuid.UUID `gorm:"type:uuid" json:"id_question"`
-	IdStudent  uuid.UUID `gorm:"type:uuid" json:"id_student"`
+	SubmisiionID uuid.UUID `gorm:"type:uuid" json:"submission_id"`
 	IdChoice   uuid.UUID `gorm:"type:uuid" json:"id_choice"`
 }
 
@@ -17,6 +17,7 @@ type AnswerResponse struct {
 	ID         uuid.UUID `gorm:"type:uuid" json:"id"`
 	IdQuestion uuid.UUID `gorm:"type:uuid" json:"id_question"`
 	IdStudent  uuid.UUID `gorm:"type:uuid" json:"id_student"`
+	SubmissionID uuid.UUID `gorm:"type:uuid" json:"submission_id"`
 	IdChoice   uuid.UUID `gorm:"type:uuid" json:"id_choice"`
 	CreatedAt  time.Time `json:"created_at"`
 }

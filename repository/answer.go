@@ -16,6 +16,7 @@ type (
 		UpdateAnswer(ctx context.Context, tx *gorm.DB, answer *entities.Answer) (*entities.Answer, error)
 		GetAnswerByQuestionID(ctx context.Context, tx *gorm.DB, questionID string) ([]entities.Answer, error)
 		GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
+		GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID string) ([]entities.Answer, error)
 	}
 	answerRepository struct {
 		Db *gorm.DB
@@ -33,7 +34,7 @@ func (answerRepo *answerRepository) CreateAnswer(ctx context.Context, tx *gorm.D
 	res := dto.AnswerResponse{
 		ID:        answer.ID,
 		IdQuestion: answer.QuestionID,
-		IdStudent:  answer.StudentID,
+		SubmissionID: answer.SubmissionID, 
 		IdChoice:  answer.ChoiceID,
 		CreatedAt: answer.CreatedAt,
 	}
@@ -77,6 +78,14 @@ func (answerRepo *answerRepository) GetAnswerByQuestionID(ctx context.Context, t
 func (answerRepo *answerRepository) GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
 	var answers []entities.Answer
 	if err := answerRepo.Db.Where("student_id = ?", id.IdStudent).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
+		return nil, err
+	}
+	return answers, nil
+}
+
+func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID string) ([]entities.Answer, error) {
+	var answers []entities.Answer
+	if err := answerRepo.Db.Where("submission_id = ?", submissionID).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
 		return nil, err
 	}
 	return answers, nil

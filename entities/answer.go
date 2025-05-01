@@ -21,7 +21,8 @@ type Answer struct {
     ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
     QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id"`
     ChoiceID   uuid.UUID `gorm:"type:uuid" json:"choice_id"`
-    StudentID  uuid.UUID `gorm:"type:uuid" json:"student_id"`
+    // StudentID  uuid.UUID `gorm:"type:uuid" json:"student_id"`
+    SubmissionID uuid.UUID `gorm:"type:uuid" json:"submission_id"`
     CreatedAt  time.Time `json:"created_at"`
     UpdatedAt  time.Time `json:"updated_at"`
     DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
@@ -30,4 +31,7 @@ type Answer struct {
 
     // Relasi ke Choice
     Choice Choice `gorm:"foreignKey:ChoiceID;references:ID" json:"choice"`
+
+    // Relasi ke Submission
+    Submission Submission `gorm:"foreignKey:SubmissionID;references:ID" json:"submission"`
 }

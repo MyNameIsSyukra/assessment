@@ -61,10 +61,22 @@ func ProvideChoiceDependencies(injector *do.Injector){
 	})
 }
 
+func ProvideSubmissionDependencies(injector *do.Injector){
+	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
+
+	submissionRepository := repository.NewSubmissionRepository(db)
+	submissionService := service.NewSubmissionService(submissionRepository)
+
+	do.Provide(injector, func (i *do.Injector) (controller.SubmissionController, error){
+		return controller.NewSubmissionController(submissionService),nil
+	})
+}
+
 func RegisterDependencies(injector *do.Injector) {
 	InitDatabase(injector)
 	ProvideEvaluationDependencies(injector)
 	ProvideQuestionDependencies(injector)
 	ProvideAnswerDependencies(injector)
 	ProvideChoiceDependencies(injector)
+	ProvideSubmissionDependencies(injector)
 }
