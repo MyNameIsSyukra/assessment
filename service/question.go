@@ -5,6 +5,8 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type (
@@ -14,7 +16,7 @@ type (
 		GetQuestionByID(ctx context.Context, id string) (*entities.Question, error)
 		UpdateQuestion(ctx context.Context, question *dto.QuestionUpdateRequest) (*entities.Question, error)
 		DeleteQuestion(ctx context.Context, id string) error
-		GetQuestionsByAssessmentID(ctx context.Context, assessmentID string) ([]entities.Question, error)
+		GetQuestionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Question, error)
 		CreatePertanyaan(ctx context.Context, req dto.CreateAllQuestionRequest) (dto.QuestionResponse, error)
 	}
 	questionService struct {
@@ -121,7 +123,7 @@ func (questionService *questionService) DeleteQuestion(ctx context.Context, id s
 	return nil
 }
 
-func (questionService *questionService) GetQuestionsByAssessmentID(ctx context.Context, assessmentID string) ([]entities.Question, error) {
+func (questionService *questionService) GetQuestionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Question, error) {
 	questions, err := questionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, assessmentID)
 	if err != nil {
 		return nil, err

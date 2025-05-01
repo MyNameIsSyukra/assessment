@@ -5,6 +5,7 @@ import (
 	entities "assesment/entities"
 	"context"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -15,7 +16,7 @@ type (
 		GetAllQuestions() (dto.GetAllQuestionsResponse, error)
 		UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error)
 		DeleteQuestion(ctx context.Context, tx *gorm.DB, id string) error
-		GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID string) ([]entities.Question, error)
+		GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Question, error)
 		CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
 	}
 	questionRepository struct {
@@ -86,7 +87,7 @@ func (questionRepo *questionRepository) DeleteQuestion(ctx context.Context, tx *
 	return nil
 }
 
-func (questionRepo *questionRepository) GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID string) ([]entities.Question, error) {
+func (questionRepo *questionRepository) GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Question, error) {
 	var questions []entities.Question
 	if err := questionRepo.Db.Where("evaluation_id = ?", assessmentID).Preload("Choices").Find(&questions).Error; err != nil {
 		return nil, err

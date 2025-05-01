@@ -8,9 +8,9 @@ import (
 )
 
 type AnswerCreateRequest struct {
-	IdQuestion uuid.UUID `gorm:"type:uuid" json:"id_question"`
-	SubmisiionID uuid.UUID `gorm:"type:uuid" json:"submission_id"`
-	IdChoice   uuid.UUID `gorm:"type:uuid" json:"id_choice"`
+	IdQuestion uuid.UUID `gorm:"type:uuid" binding:"required" json:"id_question"`
+	SubmisiionID uuid.UUID `gorm:"type:uuid" binding:"required" json:"submission_id"`
+	IdChoice   uuid.UUID `gorm:"type:uuid" binding:"required" json:"id_choice"`
 }
 
 type AnswerResponse struct {
@@ -23,15 +23,15 @@ type AnswerResponse struct {
 }
 
 type AnswerUpdateRequest struct {
-	ID         string ` json:"id"`
+	ID         uuid.UUID ` json:"id"`
 	IdQuestion uuid.UUID `gorm:"type:uuid" json:"id_question"`
 	IdStudent  uuid.UUID `gorm:"type:uuid" json:"id_student"`
 	IdChoice   uuid.UUID `gorm:"type:uuid" json:"id_choice"`
 }
 
 type GetAnswerByStudentIDRequest struct {
-	IdStudent string `json:"id_student"`
-	IdAssesment string `json:"id_assesment"`
+	IdStudent string `json:"id_student" binding:"required"`
+	IdAssesment string `json:"id_assesment" binding:"required"`
 }
 
 type GetAnswerByStudentIDResponse struct {

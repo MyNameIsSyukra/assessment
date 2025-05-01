@@ -5,29 +5,54 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type (
 	AnswerService interface {
 		CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (dto.AnswerResponse, error)
 		GetAllAnswers(ctx context.Context) ([]entities.Answer, error)
-		GetAnswerByID(ctx context.Context, id string) (*entities.Answer, error)
+		GetAnswerByID(ctx context.Context, id uuid.UUID) (*entities.Answer, error)
 		UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error)
-		GetAnswerByQuestionID(ctx context.Context, questionID string) ([]entities.Answer, error)
+		GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error)
 		GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
 	}
 	answerService struct {
-		answerRepo repository.AnswerRepository
+		answerRepo     repository.AnswerRepository
+		submissionRepo repository.SubmissionRepository
+		assesmentRepo repository.AssessmentRepository
 	}
 )
 
-func NewAnswerService(answerRepo repository.AnswerRepository) AnswerService {
+func NewAnswerService(answerRepo repository.AnswerRepository,submissionRepo repository.SubmissionRepository, assesmentRepo repository.AssessmentRepository) AnswerService {
 	return &answerService{
 		answerRepo: answerRepo,
+		submissionRepo: submissionRepo,
 	}
 }
 
 func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (dto.AnswerResponse, error) {
+	// Check if submission exists and is in progress
+	submission, err := answerService.submissionRepo.GetSubmissionByID(ctx, nil, answer.SubmisiionID)
+	if err != nil {
+		return dto.AnswerResponse{}, dto.ErrCreateAnswer
+	}
+	if submission.Status != "in_progress" {
+		return dto.AnswerResponse{}, errors.New("submission is not in progress")
+	}
+
+	assement, err := answerService.assesmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
+	if err != nil {
+		return dto.AnswerResponse{}, dto.ErrCreateAnswer
+	}
+
+	if time.Now().After(assement.EndTime) {
+		return dto.AnswerResponse{}, errors.New("assesment has ended")
+	}
+
 	answerEntity := entities.Answer{
 		QuestionID: answer.IdQuestion,
 		SubmissionID: answer.SubmisiionID,
@@ -36,20 +61,20 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 
 	createdAnswer, err := answerService.answerRepo.CreateAnswer(ctx, nil, &answerEntity)
 	if err != nil {
-		return dto.AnswerResponse{}, err
+		return dto.AnswerResponse{}, dto.ErrCreateAnswer
 	}
 	return createdAnswer, nil
 }
 
 func (answerService *answerService) GetAllAnswers(ctx context.Context) ([]entities.Answer, error) {
 	if answers, err := answerService.answerRepo.GetAllAnswers(); err != nil {
-		return nil, err
+		return nil, dto.ErrGetAllAnswers
 	} else {
 		return answers, nil
 	}
 }
 
-func (answerService *answerService) GetAnswerByID(ctx context.Context, id string) (*entities.Answer, error) {
+func (answerService *answerService) GetAnswerByID(ctx context.Context, id uuid.UUID) (*entities.Answer, error) {
 	answer, err := answerService.answerRepo.GetAnswerByID(ctx, nil, id)
 	if err != nil {
 		return nil, err
@@ -76,7 +101,7 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 	return updatedAnswer, nil
 }
 
-func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, questionID string) ([]entities.Answer, error) {
+func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error) {
 	answers, err := answerService.answerRepo.GetAnswerByQuestionID(ctx, nil, questionID)
 	if err != nil {
 		return nil, err
@@ -90,4 +115,4 @@ func (answerService *answerService) GetAnswerByStudentID(ctx context.Context, id
 		return nil, err
 	}
 	return answers, nil
-}
+}	

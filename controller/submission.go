@@ -20,6 +20,7 @@ type (
 		GetSubmissionsByUserID(ctx *gin.Context)
 		GetSubmissionsByAssessmentIDAndUserID(ctx *gin.Context)
 		GetSubmissionsByAssessmentIDAndClassID(ctx *gin.Context)
+		Submitted(ctx *gin.Context)
 	}
 
 	submissionController struct {
@@ -36,7 +37,7 @@ func NewSubmissionController(submissionService service.SubmissionService) Submis
 func (submissionController *submissionController) CreateSubmission(ctx *gin.Context) {
 	var request dto.SubmissionCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
 		return
 	}
 
@@ -165,4 +166,19 @@ func (submissionController *submissionController) GetSubmissionsByAssessmentIDAn
 	}
 	ctx.JSON(http.StatusOK, submissions)
 }
+
+func (submissionController *submissionController) Submitted(ctx *gin.Context) {
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+	submission, err := submissionController.submissionService.Submitted(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, submission)
+}
+
 

@@ -42,9 +42,11 @@ func ProvideQuestionDependencies(injector *do.Injector){
 func ProvideAnswerDependencies(injector *do.Injector){
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
 
-	answerRepository := repository.NewAnswerRepository(db)
-	answerService := service.NewAnswerService(answerRepository)
 
+	answerRepository := repository.NewAnswerRepository(db)
+	submissionRepository := repository.NewSubmissionRepository(db)
+	assesmentRepository := repository.NewAssessmentRepository(db)
+	answerService := service.NewAnswerService(answerRepository, submissionRepository, assesmentRepository)
 	do.Provide(injector, func (i *do.Injector) (controller.AnswerController, error){
 		return controller.NewAnswerController(answerService),nil
 	})
@@ -65,7 +67,8 @@ func ProvideSubmissionDependencies(injector *do.Injector){
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
 
 	submissionRepository := repository.NewSubmissionRepository(db)
-	submissionService := service.NewSubmissionService(submissionRepository)
+	questionRepository := repository.NewQuestionRepository(db)
+	submissionService := service.NewSubmissionService(submissionRepository, questionRepository)
 
 	do.Provide(injector, func (i *do.Injector) (controller.SubmissionController, error){
 		return controller.NewSubmissionController(submissionService),nil

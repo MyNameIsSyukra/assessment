@@ -5,14 +5,16 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type (
 	ChoiceService interface {
 		CreateChoice(ctx context.Context, choice *dto.ChoiceCreateRequest) (dto.ChoiceResponse, error)
-		GetChoiceByID(ctx context.Context, id string) (dto.ChoiceResponse, error)
+		GetChoiceByID(ctx context.Context, id uuid.UUID) (dto.ChoiceResponse, error)
 		UpdateChoice(ctx context.Context, choice *dto.ChoiceUpdateRequest) (*entities.Choice, error)
-		GetChoiceByQuestionID(ctx context.Context, questionID string) ([]entities.Choice, error)
+		GetChoiceByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Choice, error)
 	}
 	choiceService struct {
 		choiceRepo repository.ChoiceRepository
@@ -29,7 +31,7 @@ func (choiceService *choiceService) CreateChoice(ctx context.Context, choice *dt
 		choiceEntity := entities.Choice{
 			ChoiceText: choice.ChoiceText,
 			IsCorrect:  choice.IsCorrect,
-			// QuestionID: choice.QuestionID,
+			QuestionID: choice.QuestionID,
 		}
 
 		createdChoice, err := choiceService.choiceRepo.CreateChoice(ctx, nil, &choiceEntity)
@@ -44,7 +46,7 @@ func (choiceService *choiceService) CreateChoice(ctx context.Context, choice *dt
 		}, nil
 }
 
-func (choiceService *choiceService) GetChoiceByID(ctx context.Context, id string) (dto.ChoiceResponse, error) {
+func (choiceService *choiceService) GetChoiceByID(ctx context.Context, id uuid.UUID) (dto.ChoiceResponse, error) {
 	choice, err := choiceService.choiceRepo.GetChoiceByID(ctx, nil, id)
 	if err != nil {
 		return dto.ChoiceResponse{}, err
@@ -72,7 +74,7 @@ func (choiceService *choiceService) UpdateChoice(ctx context.Context, choice *dt
 	return updatedChoice, nil
 }
 
-func (choiceService *choiceService) GetChoiceByQuestionID(ctx context.Context, questionID string) ([]entities.Choice, error) {
+func (choiceService *choiceService) GetChoiceByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Choice, error) {
 	choices, err := choiceService.choiceRepo.GetChoiceByQuestionID(ctx, nil, questionID)
 	if err != nil {
 		return nil, err

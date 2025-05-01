@@ -5,15 +5,19 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+	"errors"
+
+	"github.com/google/uuid"
 )
 
 type (
 	AssessmentService interface {
 		CreateAssessment(ctx context.Context,assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error)
 		GetAllAssessments(ctx context.Context)(dto.GetAllAssessmentsResponse, error)
-		GetAssessmentByID(ctx context.Context, id string) (*entities.Assessment, error)
+		GetAssessmentByID(ctx context.Context, id uuid.UUID) (*entities.Assessment, error)
+		GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error)
 		UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error)
-		DeleteAssessment(ctx context.Context, id string) error
+		DeleteAssessment(ctx context.Context, id uuid.UUID) error
 	}
 	assesmentService struct {
 		assesmentRepo repository.AssessmentRepository
@@ -37,7 +41,7 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 	
 	createdAssessment, err := assesmentService.assesmentRepo.CreateAssessment(ctx, nil, &assesmentEntity)
 	if err != nil {
-		return dto.AssessmentCreateResponse{}, err
+		return dto.AssessmentCreateResponse{}, dto.ErrCreateAssesment
 	}
 	res := dto.AssessmentCreateResponse{
 		ID: createdAssessment.ID,
@@ -53,6 +57,9 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 
 func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context) (dto.GetAllAssessmentsResponse, error) {
 	assessments, err := assesmentService.assesmentRepo.GetAllAssessments()
+	if len(assessments) == 0 {
+		return dto.GetAllAssessmentsResponse{}, errors.New("no assessment found")
+	}
 	if err != nil {
 		return dto.GetAllAssessmentsResponse{}, err
 	}
@@ -61,8 +68,25 @@ func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context
 	}, nil
 }
 
-func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context, id string) (*entities.Assessment,error){
+func (assesmentService *assesmentService) GetAllAssesmentByClassID (ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error) {
+	assessments, err := assesmentService.assesmentRepo.GetAllAssesmentByClassID(ctx, nil, classID)
+	if len(assessments) == 0 {
+		return nil, errors.New("no assessment found")
+	}
+	if assessments == nil {
+		return nil, errors.New("no assessment found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return assessments, nil
+}
+
+func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context, id uuid.UUID) (*entities.Assessment,error){
 	assesment, err := assesmentService.assesmentRepo.GetAssessmentByID(ctx,nil,id)
+	if assesment == nil {
+		return nil, errors.New("no assessment found")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +95,10 @@ func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context
 
 func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
 	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.IdEvaluation)
-	print(ass)
 	if ass == nil {
+		return nil, errors.New("no assessment found")
+	}
+	if err != nil {
 		return nil, err
 	}
 	assesmentEntity := entities.Assessment{
@@ -91,10 +117,13 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 	return updatedAssessment, nil
 }
 
-func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context, id string) error {
+func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context, id uuid.UUID) error {
 	asses,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, id)
 	if err != nil {
 		return err
+	}
+	if asses == nil {
+		return errors.New("no assessment found")
 	}
 
 	err = assesmentService.assesmentRepo.DeleteAssessment(ctx, nil,asses.ID.String())

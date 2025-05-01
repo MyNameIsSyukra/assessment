@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type (
@@ -29,7 +30,7 @@ func NewChoiceController(choiceService service.ChoiceService) ChoiceController {
 func (choiceController *choiceController) CreateChoice(ctx *gin.Context) {
 	var request dto.ChoiceCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
 		return
 	}
 
@@ -42,7 +43,11 @@ func (choiceController *choiceController) CreateChoice(ctx *gin.Context) {
 }
 
 func (choiceController *choiceController) GetChoiceByID(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id ,err:= uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id format"})
+		return
+	}
 	choice, err := choiceController.choiceService.GetChoiceByID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -52,7 +57,11 @@ func (choiceController *choiceController) GetChoiceByID(ctx *gin.Context) {
 }
 
 func (choiceController *choiceController) UpdateChoice(ctx *gin.Context) {
-	id:= ctx.Param("id")
+	id,err:= uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id format"})
+		return
+	}
 	var request dto.ChoiceUpdateRequest
 	request.ID = id
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -68,7 +77,11 @@ func (choiceController *choiceController) UpdateChoice(ctx *gin.Context) {
 }
 
 func (choiceController *choiceController) GetChoicesByQuestionID(ctx *gin.Context) {
-	questionID := ctx.Param("id")
+	questionID,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id format"})
+		return
+	}
 	choices, err := choiceController.choiceService.GetChoiceByQuestionID(ctx.Request.Context(), questionID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

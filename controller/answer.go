@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type (
@@ -31,7 +32,7 @@ func NewAnswerController(answerService service.AnswerService) AnswerController {
 func (answerController *answerController) CreateAnswer(ctx *gin.Context) {
 	var request dto.AnswerCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
 		return
 	}
 
@@ -53,7 +54,11 @@ func (answerController *answerController) GetAllAnswers(ctx *gin.Context) {
 }
 
 func (answerController *answerController) GetAnswerByID(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid answer ID"})
+		return
+	}
 	answer, err := answerController.answerService.GetAnswerByID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -63,7 +68,11 @@ func (answerController *answerController) GetAnswerByID(ctx *gin.Context) {
 }
 
 func (answerController *answerController) UpdateAnswer(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid answer ID"})
+		return
+	}
 	var request dto.AnswerUpdateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -79,7 +88,12 @@ func (answerController *answerController) UpdateAnswer(ctx *gin.Context) {
 }
 
 func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context) {
-	questionID := ctx.Param("question_id")
+	questionID,err := uuid.Parse(ctx.Param("question_id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid question ID"})
+		return
+	}
+	
 	answers, err := answerController.answerService.GetAnswerByQuestionID(ctx.Request.Context(), questionID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -91,7 +105,7 @@ func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context
 func (answerController *answerController) GetAnswerByStudentID(ctx *gin.Context) {
 	var req dto.GetAnswerByStudentIDRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
 		return
 	}
 	answers, err := answerController.answerService.GetAnswerByStudentID(ctx.Request.Context(), req)

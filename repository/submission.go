@@ -20,6 +20,7 @@ type (
 		GetSubmissionsByUserID(ctx context.Context, tx *gorm.DB, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error)
+		Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error)
 	}
 	submissionRepository struct {
 		Db *gorm.DB
@@ -110,6 +111,16 @@ func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndClass
 		return nil, err
 	}
 	return submissions, nil
+}
+
+func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error) {
+	if err := submissionRepo.Db.Where("id = ?", submission.ID).First(&submission).Error; err != nil {
+		return nil, err
+	}
+	if err := submissionRepo.Db.Save(submission).Error; err != nil {
+		return nil, err
+	}
+	return submission, nil
 }
 
 

@@ -5,15 +5,16 @@ import (
 	entities "assesment/entities"
 	"context"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type (
 	ChoiceRepository interface {
 		CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
-		GetChoiceByID(ctx context.Context, tx *gorm.DB, id string) (dto.ChoiceResponse, error)
+		GetChoiceByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (dto.ChoiceResponse, error)
 		UpdateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
-		GetChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID string) ([]entities.Choice, error)
+		GetChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Choice, error)
 	}
 	choiceRepository struct {
 		Db *gorm.DB
@@ -31,7 +32,7 @@ func (choiceRepo *choiceRepository) CreateChoice(ctx context.Context, tx *gorm.D
 	return choice, nil
 }
 
-func (choiceRepo *choiceRepository) GetChoiceByID(ctx context.Context, tx *gorm.DB, id string) (dto.ChoiceResponse, error) {
+func (choiceRepo *choiceRepository) GetChoiceByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (dto.ChoiceResponse, error) {
 	var choice entities.Choice
 	if err := choiceRepo.Db.Where("id = ?", id).First(&choice).Error; err != nil {
 		return dto.ChoiceResponse{}, err
@@ -53,7 +54,7 @@ func (choiceRepo *choiceRepository) UpdateChoice(ctx context.Context, tx *gorm.D
 	return choice, nil
 }
 
-func (choiceRepo *choiceRepository) GetChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID string) ([]entities.Choice, error) {
+func (choiceRepo *choiceRepository) GetChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Choice, error) {
 	var choices []entities.Choice
 	if err := choiceRepo.Db.Where("question_id = ?", questionID).Find(&choices).Error; err != nil {
 		return nil, err

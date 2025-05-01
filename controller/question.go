@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type (
@@ -34,7 +35,7 @@ func (questionController *questionController) CreateAllQuestion(ctx *gin.Context
 	var request []dto.CreateAllQuestionRequest
 	var response []dto.QuestionResponse
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
 		return
 	}
 
@@ -112,8 +113,11 @@ func (questionController *questionController) DeleteQuestion(ctx *gin.Context) {
 }
 
 func (questionController *questionController) GetQuestionsByAssessmentID(ctx *gin.Context) {
-	id := ctx.Param("id")
-	print(id)
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
 	questions, err := questionController.questionService.GetQuestionsByAssessmentID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

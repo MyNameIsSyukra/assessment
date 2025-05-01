@@ -4,14 +4,16 @@ import (
 	entities "assesment/entities"
 	"context"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type (
 	AssessmentRepository interface {
 	CreateAssessment(ctx context.Context, tx *gorm.DB, assesment *entities.Assessment) (*entities.Assessment, error)
-	GetAssessmentByID(ctx context.Context, tx *gorm.DB, id string) (*entities.Assessment, error)
+	GetAssessmentByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Assessment, error)
 	GetAllAssessments() ([]entities.Assessment, error)
+	GetAllAssesmentByClassID(ctx context.Context, tx *gorm.DB, classID uuid.UUID) ([]entities.Assessment, error)
 	UpdateAssessment(ctx context.Context, tx *gorm.DB,assesment *entities.Assessment) (*entities.Assessment, error)
 	DeleteAssessment(ctx context.Context, tx *gorm.DB,id string) error
 }
@@ -31,12 +33,22 @@ func (assesmentRepo *assesmentRepository) CreateAssessment(ctx context.Context, 
 	return assesment, nil
 }
 
-func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context, tx *gorm.DB,id string) (*entities.Assessment, error) {
+func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context, tx *gorm.DB,id uuid.UUID) (*entities.Assessment, error) {
 	var assesment entities.Assessment
 	if err := assesmentRepo.Db.Where("id = ?", id).First(&assesment).Error; err != nil {
 		return nil, err
 	}
 	return &assesment, nil
+}
+
+// GetAllAssesmentByClassID retrieves all assessments by class ID
+func (assesmentRepo *assesmentRepository) GetAllAssesmentByClassID(ctx context.Context, tx *gorm.DB,classID uuid.UUID) ([]entities.Assessment, error) {
+	var assessments []entities.Assessment
+	if err := assesmentRepo.Db.Where("class_id = ?", classID).Find(&assessments).Error; err != nil {
+		return nil, err
+	}
+
+	return assessments, nil
 }
 
 func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assessment, error) {

@@ -8,8 +8,8 @@ import (
 )
 
 type CreateAllQuestionRequest struct{
-	QuestionText string `json:"question_text"`
-	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
+	QuestionText string `json:"question_text" binding:"required"`
+	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id" binding:"required"`
 	Choices []ChoiceCreateRequest `json:"choices"`
 }
 
