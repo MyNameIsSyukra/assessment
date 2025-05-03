@@ -16,8 +16,9 @@ type (
 		GetAllAnswers() ([]entities.Answer, error)
 		UpdateAnswer(ctx context.Context, tx *gorm.DB, answer *entities.Answer) (*entities.Answer, error)
 		GetAnswerByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Answer, error)
-		GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
+		// GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
 		GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]entities.Answer, error)
+		GetAnswerBySubmissionIDAndQuestionID(ctx context.Context, tx *gorm.DB, SubmisiionID uuid.UUID, IdQuestion uuid.UUID) (*entities.Answer, error)
 	}
 	answerRepository struct {
 		Db *gorm.DB
@@ -78,13 +79,13 @@ func (answerRepo *answerRepository) GetAnswerByQuestionID(ctx context.Context, t
 	return answers, nil
 }
 
-func (answerRepo *answerRepository) GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
-	var answers []entities.Answer
-	if err := answerRepo.Db.Where("student_id = ?", id.IdStudent).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
-		return nil, err
-	}
-	return answers, nil
-}
+// func (answerRepo *answerRepository) GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
+// 	var answers []entities.Answer
+// 	if err := answerRepo.Db.Where("student_id = ?", id.IdStudent).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
+// 		return nil, err
+// 	}
+// 	return answers, nil
+// }
 
 func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]entities.Answer, error) {
 	var answers []entities.Answer
@@ -92,4 +93,12 @@ func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context,
 		return nil, err
 	}
 	return answers, nil
+}
+
+func (answerRepo *answerRepository) GetAnswerBySubmissionIDAndQuestionID(ctx context.Context, tx *gorm.DB, SubmisiionID uuid.UUID, IdQuestion uuid.UUID) (*entities.Answer, error) {
+	var answers entities.Answer
+	if err := answerRepo.Db.Where("submission_id = ? AND question_id = ?", SubmisiionID, IdQuestion).Find(&answers).Error; err != nil {
+		return nil, err
+	}
+	return &answers, nil
 }

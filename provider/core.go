@@ -32,7 +32,8 @@ func ProvideQuestionDependencies(injector *do.Injector){
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
 
 	questionRepository := repository.NewQuestionRepository(db)
-	questionService := service.NewQuestionService(questionRepository)
+	assesmentRepository := repository.NewAssessmentRepository(db)
+	questionService := service.NewQuestionService(questionRepository,assesmentRepository)
 
 	do.Provide(injector, func (i *do.Injector) (controller.QuestionController, error){
 		return controller.NewQuestionController(questionService),nil

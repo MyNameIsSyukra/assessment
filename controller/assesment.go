@@ -3,6 +3,7 @@ package controller
 import (
 	dto "assesment/dto"
 	service "assesment/service"
+	"assesment/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,36 +33,43 @@ func NewAssessmentController(assesmentService service.AssessmentService) Assessm
 func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Context) {
 	var request dto.AssessmentCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	assesment, err := assesmentController.assesmentService.CreateAssessment(ctx.Request.Context(), &request)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusCreated, assesment)
+	res := utils.SuccessResponse(assesment)
+	ctx.JSON(http.StatusCreated, res)
 }
 
 func (assesmentController *assesmentController) GetAllAssessments(ctx *gin.Context) {
 	assessments, err := assesmentController.assesmentService.GetAllAssessments(ctx.Request.Context())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, assessments)
+	res := utils.SuccessResponse(assessments)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gin.Context) {
 	classID,err := uuid.Parse(ctx.Param("classID"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid class ID"})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	assessments, err := assesmentController.assesmentService.GetAllAssesmentByClassID(ctx.Request.Context(), classID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	ctx.JSON(http.StatusOK, assessments)
@@ -70,51 +78,61 @@ func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gi
 func (assesmentController *assesmentController) GetAssessmentByID(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	assesment, err := assesmentController.assesmentService.GetAssessmentByID(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, assesment)
+	res := utils.SuccessResponse(assesment)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	var request dto.AssessmentUpdateRequest
+	request.IdEvaluation = id
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	request.IdEvaluation = id
 
 	assesment, err := assesmentController.assesmentService.UpdateAssessment(ctx.Request.Context(), &request)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, assesment)
+	res := utils.SuccessResponse(assesment)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	err = assesmentController.assesmentService.DeleteAssessment(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, "Deleted successfully")
+	res := utils.SuccessResponse("Deleted successfully")
+	ctx.JSON(http.StatusOK, res)
 }
 

@@ -12,10 +12,10 @@ import (
 type (
 	QuestionRepository interface {
 		CreateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (dto.QuestionResponse, error)
-		GetQuestionByID(ctx context.Context, tx *gorm.DB, id string) (*entities.Question, error)
+		GetQuestionByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Question, error)
 		GetAllQuestions() (dto.GetAllQuestionsResponse, error)
 		UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error)
-		DeleteQuestion(ctx context.Context, tx *gorm.DB, id string) error
+		DeleteQuestion(ctx context.Context, tx *gorm.DB, id uuid.UUID) error
 		GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Question, error)
 		CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
 	}
@@ -29,7 +29,7 @@ func NewQuestionRepository(db *gorm.DB) QuestionRepository {
 }
 
 func (questionRepo *questionRepository) CreateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (dto.QuestionResponse, error) {	
-	err := questionRepo.Db.Create(question).Error; 
+	err := questionRepo.Db.Create(question).Error;
 	if err != nil {
 		return dto.QuestionResponse{}, err
 	}
@@ -49,9 +49,9 @@ func (choiceRepo *questionRepository) CreateChoice(ctx context.Context, tx *gorm
 	return choice, nil
 }
 
-func (questionRepo *questionRepository) GetQuestionByID(ctx context.Context, tx *gorm.DB, id string) (*entities.Question, error) {
+func (questionRepo *questionRepository) GetQuestionByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Question, error) {
 	var question entities.Question
-	if err := questionRepo.Db.Where("id = ?", id).First(&question).Error; err != nil {
+	if err := questionRepo.Db.Where("id = ?", id).Preload("Choices").First(&question).Error; err != nil {
 		return nil, err
 	}
 	return &question, nil
@@ -79,7 +79,7 @@ func (questionRepo *questionRepository) UpdateQuestion(ctx context.Context, tx *
 	return question, nil
 }
 
-func (questionRepo *questionRepository) DeleteQuestion(ctx context.Context, tx *gorm.DB, id string) error {
+func (questionRepo *questionRepository) DeleteQuestion(ctx context.Context, tx *gorm.DB, id uuid.UUID) error {
 
 	if err := questionRepo.Db.Delete(&entities.Question{},"id", id).Error; err != nil {
 		return err

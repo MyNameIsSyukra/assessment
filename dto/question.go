@@ -7,10 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateAllQuestionRequest struct{
-	QuestionText string `json:"question_text" binding:"required"`
+type CreateAllQuestionRequest struct {
 	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id" binding:"required"`
-	Choices []ChoiceCreateRequest `json:"choices"`
+	Questions []AllQuestionRequest `json:"questions" binding:"required,dive"`
+}
+type AllQuestionRequest struct{
+	QuestionText string `json:"question_text" binding:"required"`
+	Choices []ChoiceCreateRequest `json:"choices" binding:"required,dive"`
 }
 
 // type CreateAllQuestionRequest struct{
@@ -30,7 +33,7 @@ type QuestionCreateRequest struct {
 }
 
 type QuestionUpdateRequest struct {
-	Id           string `json:"id"`
+	Id           uuid.UUID `json:"id"`
 	QuestionText string `json:"question_text"`
 	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
 }

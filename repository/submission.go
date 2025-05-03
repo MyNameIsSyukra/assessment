@@ -35,7 +35,7 @@ func NewSubmissionRepository(db *gorm.DB) SubmissionRepository {
 
 func (submissionRepo *submissionRepository) CreateSubmission(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error) {
 	submissionExist := submissionRepo.Db.Where("id = ?", submission.ID).First(&submission)
-	if submissionExist != nil {
+	if submissionExist.Error == nil {
 		return nil, errors.New("submission already exists")
 	}
 	

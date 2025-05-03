@@ -5,6 +5,7 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 )
@@ -36,22 +37,30 @@ func NewSubmissionService(submissionRepo repository.SubmissionRepository, questi
 }
 
 func (submissionService *submissionService) CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error) {
-	exixtSubmission, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
-	if exixtSubmission != nil {
-		return dto.SubmissionCreateResponse{}, err
+	existingSubmissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
+	if err != nil {
+		return dto.SubmissionCreateResponse{}, err // error DB atau lainnya
+	}
+
+	if existingSubmissions != nil {
+		return dto.SubmissionCreateResponse{}, errors.New("submission already exists")
 	}	
 	submissionEntity := entities.Submission{
 		UserID: 	 submission.UserID,
 		AssessmentID: submission.AssessmentID,
 		Status: "in_progress",
 	}
-	
-	createdSubmission, err := submissionService.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
+
+	question, err := submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
 	if err != nil {
 		return dto.SubmissionCreateResponse{}, err
 	}
+	if len(question) == 0{
+		return dto.SubmissionCreateResponse{}, err
+		
+	}
 
-	question, err := submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, createdSubmission.AssessmentID)
+	createdSubmission, err := submissionService.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
 	if err != nil {
 		return dto.SubmissionCreateResponse{}, err
 	}

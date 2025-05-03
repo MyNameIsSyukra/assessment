@@ -3,6 +3,7 @@ package controller
 import (
 	dto "assesment/dto"
 	service "assesment/service"
+	"assesment/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -37,13 +38,15 @@ func NewSubmissionController(submissionService service.SubmissionService) Submis
 func (submissionController *submissionController) CreateSubmission(ctx *gin.Context) {
 	var request dto.SubmissionCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	submission, err := submissionController.submissionService.CreateSubmission(ctx.Request.Context(), &request)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	ctx.JSON(http.StatusCreated, submission)
@@ -52,24 +55,29 @@ func (submissionController *submissionController) CreateSubmission(ctx *gin.Cont
 func (submissionController *submissionController) GetAllSubmissions(ctx *gin.Context) {
 	submissions, err := submissionController.submissionService.GetAllSubmissions(ctx.Request.Context())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, submissions)
+	res := utils.SuccessResponse(submissions)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (submissionController *submissionController) GetSubmissionByID(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse("invalid id format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	submission, err := submissionController.submissionService.GetSubmissionByID(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, submission)
+	res := utils.SuccessResponse(submission)
+	ctx.JSON(http.StatusOK, res)
 }
 // func (submissionController *submissionController) UpdateSubmission(ctx *gin.Context) {
 // 	id := ctx.Param("id")

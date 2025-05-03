@@ -5,6 +5,7 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 )
@@ -13,34 +14,46 @@ type (
 	QuestionService interface {
 		CreateQuestion(ctx context.Context, question *dto.QuestionCreateRequest) (dto.QuestionResponse, error)
 		GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error)
-		GetQuestionByID(ctx context.Context, id string) (*entities.Question, error)
+		GetQuestionByID(ctx context.Context, id uuid.UUID) (*entities.Question, error)
 		UpdateQuestion(ctx context.Context, question *dto.QuestionUpdateRequest) (*entities.Question, error)
-		DeleteQuestion(ctx context.Context, id string) error
+		DeleteQuestion(ctx context.Context, id uuid.UUID) error
 		GetQuestionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Question, error)
-		CreatePertanyaan(ctx context.Context, req dto.CreateAllQuestionRequest) (dto.QuestionResponse, error)
+		CreatePertanyaan(ctx context.Context, evaluationID uuid.UUID, question dto.AllQuestionRequest) (dto.QuestionResponse, error)
 	}
 	questionService struct {
 		questionRepo repository.QuestionRepository
+		assesRepo  repository.AssessmentRepository
 	}
 )
 
-func NewQuestionService(questionRepo repository.QuestionRepository) QuestionService {
+func NewQuestionService(questionRepo repository.QuestionRepository, assesRepo repository.AssessmentRepository) QuestionService {
 	return &questionService{
 		questionRepo: questionRepo,
+		assesRepo:  assesRepo,
 	}
 }
 
-func (questionService *questionService) CreatePertanyaan(ctx context.Context,req dto.CreateAllQuestionRequest) (dto.QuestionResponse, error) {
-	questionEntity := entities.Question{
-		QuestionText: req.QuestionText,
-		EvaluationID: req.EvaluationID,
+func (questionService *questionService) CreatePertanyaan(ctx context.Context, evaluationID uuid.UUID, question dto.AllQuestionRequest) (dto.QuestionResponse, error) {
+	// Check if the assessment exists
+	assesment, err := questionService.assesRepo.GetAssessmentByID(ctx, nil, evaluationID)
+	if assesment == nil {
+		return dto.QuestionResponse{}, errors.New("assessment not found")
 	}
+	if err != nil {
+		return dto.QuestionResponse{}, err
+	}
+	questionEntity := entities.Question{
+		EvaluationID: evaluationID,
+		QuestionText: question.QuestionText,
+	}
+
+
 	createdQuestion, err := questionService.questionRepo.CreateQuestion(ctx, nil, &questionEntity)
 	if err != nil {
 		return dto.QuestionResponse{}, err
 	}
 	
-	for _, choice := range req.Choices {
+	for _, choice := range question.Choices {
 		choice.QuestionID = createdQuestion.ID
 		data := entities.Choice{
 			ChoiceText: choice.ChoiceText,
@@ -83,7 +96,7 @@ func (questionService *questionService) GetAllQuestions(ctx context.Context) (dt
 	return questions, nil
 }
 
-func (questionService *questionService) GetQuestionByID(ctx context.Context, id string) (*entities.Question, error) {
+func (questionService *questionService) GetQuestionByID(ctx context.Context, id uuid.UUID) (*entities.Question, error) {
 	question, err := questionService.questionRepo.GetQuestionByID(ctx, nil, id)
 	if err != nil {
 		return nil, err
@@ -110,13 +123,13 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	return updatedQuestion, nil
 }
 
-func (questionService *questionService) DeleteQuestion(ctx context.Context, id string) error {
+func (questionService *questionService) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
 	question, err := questionService.questionRepo.GetQuestionByID(ctx, nil, id)
 	if err != nil {
 		return err
 	}
 	
-	err = questionService.questionRepo.DeleteQuestion(ctx, nil, question.ID.String())
+	err = questionService.questionRepo.DeleteQuestion(ctx, nil, question.ID)
 	if err != nil {
 		return err
 	}
@@ -127,6 +140,9 @@ func (questionService *questionService) GetQuestionsByAssessmentID(ctx context.C
 	questions, err := questionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, assessmentID)
 	if err != nil {
 		return nil, err
+	}
+	if len(questions) == 0 {
+		return nil, errors.New("no questions found for this assessment")
 	}
 	return questions, nil
 }

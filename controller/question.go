@@ -3,6 +3,7 @@ package controller
 import (
 	dto "assesment/dto"
 	service "assesment/service"
+	"assesment/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,96 +33,134 @@ func NewQuestionController(questionService service.QuestionService) QuestionCont
 
 
 func (questionController *questionController) CreateAllQuestion(ctx *gin.Context) {
-	var request []dto.CreateAllQuestionRequest
+	var request dto.CreateAllQuestionRequest
 	var response []dto.QuestionResponse
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": dto.FailedGetDataFromBody})
+		if err := ctx.ShouldBindJSON(&request.Questions); err != nil {
+			res := utils.FailedResponse(utils.FailedGetDataFromBody)
+			ctx.JSON(http.StatusBadRequest, res)
+			return
+		}
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	for _, choice := range request {
-		data, err := questionController.questionService.CreatePertanyaan(ctx.Request.Context(), choice)
+	for _, choice := range request.Questions {
+		data, err := questionController.questionService.CreatePertanyaan(ctx.Request.Context(), request.EvaluationID, choice)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			res := utils.FailedResponse(err.Error())
+			ctx.JSON(http.StatusBadRequest, res)
 			return
 		}
 		response = append(response, data)	
 	}
-	ctx.JSON(http.StatusCreated, response)
+	res := utils.SuccessResponse(response)
+	ctx.JSON(http.StatusCreated, res)
 }
 
 
 func (questionController *questionController) CreateQuestion(ctx *gin.Context) {
 	var request dto.QuestionCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	question, err := questionController.questionService.CreateQuestion(ctx.Request.Context(), &request)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusCreated, question)
+	res := utils.SuccessResponse(question)
+	ctx.JSON(http.StatusCreated, res)
 }	
 
 func (questionController *questionController) GetAllQuestions(ctx *gin.Context) {
 	questions, err := questionController.questionService.GetAllQuestions(ctx.Request.Context())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, questions)
+	res := utils.SuccessResponse(questions)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (questionController *questionController) GetQuestionByID(ctx *gin.Context) {
-	id := ctx.Param("id")
-	question, err := questionController.questionService.GetQuestionByID(ctx.Request.Context(), id)
+	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse("invalid id format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, question)
+	question, err := questionController.questionService.GetQuestionByID(ctx.Request.Context(), id)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res := utils.SuccessResponse(question)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (questionController *questionController) UpdateQuestion(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		res := utils.FailedResponse("invalid id format")
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
 	var request dto.QuestionUpdateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	request.Id = id
 	// fmt.Print(request)
 	question, err := questionController.questionService.UpdateQuestion(ctx.Request.Context(), &request)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, question)
+	res := utils.SuccessResponse(question)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (questionController *questionController) DeleteQuestion(ctx *gin.Context) {
-	id := ctx.Param("id")
-	err := questionController.questionService.DeleteQuestion(ctx.Request.Context(), id)
+	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse("invalid id format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, "Deleted successfully")
+	err = questionController.questionService.DeleteQuestion(ctx.Request.Context(), id)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res := utils.SuccessResponse("Deleted successfully")
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (questionController *questionController) GetQuestionsByAssessmentID(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse("invalid id format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	questions, err := questionController.questionService.GetQuestionsByAssessmentID(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, questions)
+	res := utils.SuccessResponse(questions)
+	ctx.JSON(http.StatusOK, res)
 }
