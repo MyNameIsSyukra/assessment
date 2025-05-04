@@ -19,6 +19,10 @@ type (
 		GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error)
 		UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error)
 		DeleteAssessment(ctx context.Context, id uuid.UUID) error
+
+		// Student
+		StudentGetAllAssesmentByClassIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)([]dto.StudentGetAllAssesmentByClassIDResponse, error)
+		GetAssessmentByIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)(dto.GetAssessmentByIDAndByUserIDResponse, error)
 	}
 	assesmentService struct {
 		assesmentRepo repository.AssessmentRepository
@@ -69,7 +73,7 @@ func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context
 	}, nil
 }
 
-func (assesmentService *assesmentService) GetAllAssesmentByClassID (ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error) {
+func (assesmentService *assesmentService) GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error) {
 	assessments, err := assesmentService.assesmentRepo.GetAllAssesmentByClassID(ctx, nil, classID)
 	if len(assessments) == 0 {
 		return nil, utils.ErrGetAllAssesmentByClassID
@@ -83,7 +87,7 @@ func (assesmentService *assesmentService) GetAllAssesmentByClassID (ctx context.
 	return assessments, nil
 }
 
-func (assesmentService *assesmentService) GetAssessmentByID (ctx context.Context, id uuid.UUID) (*entities.Assessment,error){
+func (assesmentService *assesmentService) GetAssessmentByID(ctx context.Context, id uuid.UUID) (*entities.Assessment,error){
 	assesment, err := assesmentService.assesmentRepo.GetAssessmentByID(ctx,nil,id)
 	if assesment == nil {
 		return nil, utils.ErrGetAssesmentByID
@@ -135,3 +139,35 @@ func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context,
 }
 
 
+// Student
+func (assesmentService *assesmentService) StudentGetAllAssesmentByClassIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)([]dto.StudentGetAllAssesmentByClassIDResponse, error){
+	assessments, err := assesmentService.assesmentRepo.StudentGetAllAssesmentByClassIDAndUserID(ctx, nil, classID,userID)
+	if len(assessments) == 0 {
+		return nil, utils.ErrGetAllAssesmentByClassID
+	}
+	if assessments == nil {
+		return nil, utils.ErrGetAllAssesmentByClassID
+	}
+	if err != nil {
+		return nil, utils.ErrGetAllAssesmentByClassID
+	}
+	return assessments, nil
+}
+
+func (assesmentService *assesmentService) GetAssessmentByIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)(dto.GetAssessmentByIDAndByUserIDResponse, error){
+	assessments, err := assesmentService.assesmentRepo.GetAssessmentByIDAndByUserID(ctx, nil, classID,userID)
+	if assessments == nil {
+		return dto.GetAssessmentByIDAndByUserIDResponse{}, utils.ErrGetAllAssesmentByClassID
+	}
+	if err != nil {
+		return dto.GetAssessmentByIDAndByUserIDResponse{}, utils.ErrGetAllAssesmentByClassID
+	}
+
+	return dto.GetAssessmentByIDAndByUserIDResponse{
+		Assessment: assessments.Assessment,
+		SubmissionStatus: assessments.SubmissionStatus,
+		SubmissionID: assessments.SubmissionID,
+	}, nil 
+}
+
+// Antar Service

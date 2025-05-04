@@ -18,7 +18,7 @@ type (
 		DeleteSubmission(ctx context.Context, tx *gorm.DB, id uuid.UUID) error
 		GetSubmissionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByUserID(ctx context.Context, tx *gorm.DB, userID uuid.UUID) ([]entities.Submission, error)
-		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error)
+		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, bool,error)
 		GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error)
 		Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error)
 	}
@@ -97,12 +97,12 @@ func (submissionRepo *submissionRepository) GetSubmissionsByUserID(ctx context.C
 	return submissions, nil
 }
 
-func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error) {
+func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission,bool, error) {
 	var submission entities.Submission
 	if err := submissionRepo.Db.Where("assessment_id = ? AND user_id = ?", assessmentID, userID).First(&submission).Error; err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return &submission, nil
+	return &submission, true, nil
 }
 
 func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error) {

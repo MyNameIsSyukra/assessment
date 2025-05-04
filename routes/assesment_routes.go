@@ -19,4 +19,12 @@ func Assessment(route *gin.Engine, injector *do.Injector) {
 		routes.DELETE("/:id", asssessmentController.DeleteAssessment)
 		routes.GET("/class/:classID", asssessmentController.GetAllAssesmentByClassID)
 	}
+
+	// Student routes
+	routes = route.Group("/api/v1/student/assessment")
+	{
+		routes.GET("/class/:classID/:userID", asssessmentController.GetAllAssesmentByClassIDAssesmentFlag)
+		routes.GET("/:id/:userID", asssessmentController.GetAssessmentByIDAndUserID)
+	}
+
 }

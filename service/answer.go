@@ -32,6 +32,7 @@ func NewAnswerService(answerRepo repository.AnswerRepository,submissionRepo repo
 	return &answerService{
 		answerRepo: answerRepo,
 		submissionRepo: submissionRepo,
+		assesmentRepo: assesmentRepo,
 	}
 }
 
@@ -44,7 +45,7 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 	if submission.Status != "in_progress" {
 		return dto.AnswerResponse{}, errors.New("submission is not in progress")
 	}
-
+	
 	assement, err := answerService.assesmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
 	if err != nil {
 		return dto.AnswerResponse{}, utils.ErrCreateAnswer
@@ -52,18 +53,21 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 	if time.Now().After(assement.EndTime) {
 		return dto.AnswerResponse{}, errors.New("assesment has ended")
 	}
-
+	
 	answerExists, err := answerService.answerRepo.GetAnswerBySubmissionIDAndQuestionID(ctx, nil, answer.SubmisiionID, answer.IdQuestion)
-	if answerExists != nil || err != nil {
+	if err != nil {
+		return dto.AnswerResponse{}, utils.ErrCreateAnswer
+	}
+	if answerExists.ID != uuid.Nil {
 		return dto.AnswerResponse{}, errors.New("answer already exists")
 	}
-
+	
 	answerEntity := entities.Answer{
 		QuestionID: answer.IdQuestion,
 		SubmissionID: answer.SubmisiionID,
 		ChoiceID: answer.IdChoice,
 	}
-
+	
 	createdAnswer, err := answerService.answerRepo.CreateAnswer(ctx, nil, &answerEntity)
 	if err != nil {
 		return dto.AnswerResponse{}, utils.ErrCreateAnswer
@@ -89,6 +93,9 @@ func (answerService *answerService) GetAnswerByID(ctx context.Context, id uuid.U
 
 func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error) {
 	answ,err := answerService.answerRepo.GetAnswerByID(ctx, nil, answer.ID)
+	if err != nil {
+		return nil, utils.ErrGetAnswerByID
+	}
 	if answ == nil {
 		return nil, utils.ErrGetAnswerByID
 	}

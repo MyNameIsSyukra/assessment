@@ -24,4 +24,5 @@ type ExamStatus string
 const (
 	StatusInProgress ExamStatus = "in_progress"
 	StatusSubmitted  ExamStatus = "submitted"
+	StatusTodo 	 ExamStatus = "todo"
 )

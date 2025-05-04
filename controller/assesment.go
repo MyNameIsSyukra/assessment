@@ -18,6 +18,10 @@ type (
 		UpdateAssessment(ctx *gin.Context) 
 		DeleteAssessment(ctx *gin.Context) 
 		GetAllAssesmentByClassID(ctx *gin.Context)
+
+		// Student
+		GetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context)
+		GetAssessmentByIDAndUserID(ctx *gin.Context)
 	}
 	assesmentController struct {
 	assesmentService service.AssessmentService
@@ -136,3 +140,49 @@ func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Contex
 	ctx.JSON(http.StatusOK, res)
 }
 
+
+// Student
+func (assesmentController *assesmentController) GetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context) {
+	classID,err := uuid.Parse(ctx.Param("classID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	userID,err := uuid.Parse(ctx.Param("userID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	assessments, err := assesmentController.assesmentService.StudentGetAllAssesmentByClassIDAndUserID(ctx.Request.Context(), classID,userID)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	ctx.JSON(http.StatusOK, assessments)
+}
+
+func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *gin.Context) {
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	userID,err := uuid.Parse(ctx.Param("userID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	assesment, err := assesmentController.assesmentService.GetAssessmentByIDAndUserID(ctx.Request.Context(), id,userID)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res := utils.SuccessResponse(assesment)
+	ctx.JSON(http.StatusOK, res)
+}

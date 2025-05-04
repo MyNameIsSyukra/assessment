@@ -6,6 +6,7 @@ import (
 	repository "assesment/repository"
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -37,27 +38,23 @@ func NewSubmissionService(submissionRepo repository.SubmissionRepository, questi
 }
 
 func (submissionService *submissionService) CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error) {
-	existingSubmissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
-	if err != nil {
-		return dto.SubmissionCreateResponse{}, err // error DB atau lainnya
-	}
-
-	if existingSubmissions != nil {
+	var question []entities.Question
+	_,flag, _ := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
+	// check if the submission already exists
+	if flag {
 		return dto.SubmissionCreateResponse{}, errors.New("submission already exists")
-	}	
+	}
 	submissionEntity := entities.Submission{
 		UserID: 	 submission.UserID,
 		AssessmentID: submission.AssessmentID,
 		Status: "in_progress",
 	}
 
+	fmt.Print(submissionEntity)
+
 	question, err := submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
 	if err != nil {
-		return dto.SubmissionCreateResponse{}, err
-	}
-	if len(question) == 0{
-		return dto.SubmissionCreateResponse{}, err
-		
+		question = nil
 	}
 
 	createdSubmission, err := submissionService.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
@@ -113,7 +110,7 @@ func (submissionService *submissionService) GetSubmissionsByUserID(ctx context.C
 }
 
 func (submissionService *submissionService) GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error) {
-	submission, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, assessmentID, userID)
+	submission,_, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, assessmentID, userID)
 	if err != nil {
 		return nil, err
 	}
