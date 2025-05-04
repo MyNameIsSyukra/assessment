@@ -114,16 +114,41 @@ func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndClass
 }
 
 func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error) {
+	var countIsCorrect int64
+	var totalQuestions int64
 	existingSubmission := submissionRepo.Db.Where("id = ?", submission.ID)
 	if existingSubmission.Error != nil {
 		return nil, errors.New("submission not found")
 	}
+
+	if tx == nil {
+		tx = submissionRepo.Db
+	}
+	
+	err := tx.Model(&entities.Answer{}).
+		Joins("JOIN choices ON answers.choice_id = choices.id").
+		Where("answers.submission_id = ? AND choices.is_correct = ?", submission.ID, true).
+		Count(&countIsCorrect).Error
+	if err != nil {
+		return nil, err
+	}
+	err = tx.Model(&entities.Question{}).
+	    Where("evaluation_id = ?", submission.AssessmentID).
+	    Count(&totalQuestions).Error
+	if err != nil {
+	    return nil, err
+	}
+
+	print("count", countIsCorrect)
+	print("total", totalQuestions)
+	submission.Score = float64(countIsCorrect) / float64(totalQuestions) * 100
+	// submission.Score = score
 	if err := submissionRepo.Db.Save(submission).Error; err != nil {
 		return nil, err
 	}
+
+
 	return submission, nil
 }
-
-
 
 
