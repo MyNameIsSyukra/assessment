@@ -15,7 +15,7 @@ func Question(route *gin.Engine, injector *do.Injector) {
 		routes.POST("", questionController.CreateAllQuestion)
 		routes.GET("", questionController.GetAllQuestions)
 		routes.GET("/:id", questionController.GetQuestionByID)
-		routes.PUT("/:id", questionController.UpdateQuestion)
+		routes.PUT("/update", questionController.UpdateQuestion)
 		routes.DELETE("/:id", questionController.DeleteQuestion)
 		routes.GET("/assessment/:id", questionController.GetQuestionsByAssessmentID)
 	}

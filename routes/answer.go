@@ -17,6 +17,7 @@ func Answer(route *gin.Engine, injector *do.Injector) {
 		routes.GET("/:id", answerController.GetAnswerByID)
 		routes.PUT("/:id", answerController.UpdateAnswer)
 		routes.GET("/question/:question_id", answerController.GetAnswerByQuestionID)
+		routes.GET("/submission/:submission_id", answerController.GetAnswerBySubmissionID)	
 		// routes.GET("/student/:student_id", answerController.GetAnswerByStudentID)
 	}
 }

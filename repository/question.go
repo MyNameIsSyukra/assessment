@@ -68,10 +68,6 @@ func (questionRepo *questionRepository) GetAllQuestions() (dto.GetAllQuestionsRe
 }
 
 func (questionRepo *questionRepository) UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error) {
-	// if err := questionRepo.Db.Save(question).Error; err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println("questionRepo", question.ID)
 	if err := questionRepo.Db.Where("id = ?", question.ID).Updates(question).Error; err != nil {
 		return nil, err
 	}

@@ -17,7 +17,7 @@ type (
 		UpdateAnswer(ctx context.Context, tx *gorm.DB, answer *entities.Answer) (*entities.Answer, error)
 		GetAnswerByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Answer, error)
 		// GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
-		GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]entities.Answer, error)
+		GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error)
 		GetAnswerBySubmissionIDAndQuestionID(ctx context.Context, tx *gorm.DB, SubmisiionID uuid.UUID, IdQuestion uuid.UUID) (*entities.Answer, error)
 	}
 	answerRepository struct {
@@ -87,12 +87,34 @@ func (answerRepo *answerRepository) GetAnswerByQuestionID(ctx context.Context, t
 // 	return answers, nil
 // }
 
-func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]entities.Answer, error) {
+func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error) {
 	var answers []entities.Answer
+	var dtoAnswers []dto.GetAnswerBySubmissionIDResponse
 	if err := answerRepo.Db.Where("submission_id = ?", submissionID).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
 		return nil, err
 	}
-	return answers, nil
+	for _, answer := range answers {
+		choice := dto.ChoiceGetAnswerBySubmissionIDResponse{
+			ID:         answer.Choice.ID,
+			ChoiceText: answer.Choice.ChoiceText,
+			QuestionID: answer.Choice.QuestionID,
+			CreatedAt:  answer.Choice.CreatedAt,
+			UpdatedAt:  answer.Choice.UpdatedAt,
+			DeletedAt:  answer.Choice.DeletedAt,
+		}
+		dtoAnswer := dto.GetAnswerBySubmissionIDResponse{
+			ID:         answer.ID,
+			SubmissionID: answer.SubmissionID,
+			IdQuestion: answer.QuestionID,
+			IdChoice:   answer.ChoiceID,
+			CreatedAt:  answer.CreatedAt,
+			Question:   answer.Question,
+			Choice:     choice,
+		}
+		dtoAnswers = append(dtoAnswers, dtoAnswer)
+	}
+
+	return dtoAnswers, nil
 }
 
 func (answerRepo *answerRepository) GetAnswerBySubmissionIDAndQuestionID(ctx context.Context, tx *gorm.DB, SubmisiionID uuid.UUID, IdQuestion uuid.UUID) (*entities.Answer, error) {

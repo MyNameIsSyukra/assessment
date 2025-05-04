@@ -14,8 +14,8 @@ type Submission struct {
 	Score	   float64       `json:"score"`
 	Status	   ExamStatus       `json:"status"`
 
-	Assessment Assessment `gorm:"foreignKey:AssessmentID;references:ID" json:"assessment"`
-	Answers    []Answer    `gorm:"foreignKey:SubmissionID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers"`
+	Assessment Assessment `gorm:"foreignKey:AssessmentID;references:ID" json:"assessment,omitempty"`
+	Answers    []Answer    `gorm:"foreignKey:SubmissionID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers,omitempty"`
 }
 
 type ExamStatus string

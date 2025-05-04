@@ -19,6 +19,7 @@ type (
 		GetAnswerByID(ctx context.Context, id uuid.UUID) (*entities.Answer, error)
 		UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error)
 		GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error)
+		GetAnswerBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error)
 		// GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
 	}
 	answerService struct {
@@ -121,6 +122,13 @@ func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, q
 	return answers, nil
 }
 
+func (answerService *answerService) GetAnswerBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error) {
+	answer, err := answerService.answerRepo.GetAnswerBySubmissionID(ctx, nil, submissionID)
+	if err != nil {
+		return nil, utils.ErrGetAnswerBySubmissionID
+	}
+	return answer, nil
+}
 // func (answerService *answerService) GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
 // 	answers, err := answerService.answerRepo.GetAnswerByStudentID(ctx, nil, id)
 // 	if err != nil {

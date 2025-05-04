@@ -114,8 +114,9 @@ func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndClass
 }
 
 func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error) {
-	if err := submissionRepo.Db.Where("id = ?", submission.ID).First(&submission).Error; err != nil {
-		return nil, err
+	existingSubmission := submissionRepo.Db.Where("id = ?", submission.ID)
+	if existingSubmission.Error != nil {
+		return nil, errors.New("submission not found")
 	}
 	if err := submissionRepo.Db.Save(submission).Error; err != nil {
 		return nil, err

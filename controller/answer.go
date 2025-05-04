@@ -17,6 +17,7 @@ type (
 		GetAnswerByID(ctx *gin.Context)
 		UpdateAnswer(ctx *gin.Context)
 		GetAnswerByQuestionID(ctx *gin.Context)
+		GetAnswerBySubmissionID(ctx *gin.Context)
 		// GetAnswerByStudentID(ctx *gin.Context)
 	}
 	answerController struct {
@@ -116,6 +117,25 @@ func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context
 	}
 	ctx.JSON(http.StatusOK, answers)
 }
+
+func (answerController *answerController) GetAnswerBySubmissionID(ctx *gin.Context) {
+	submissionID, err := uuid.Parse(ctx.Param("submission_id"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	answers, err := answerController.answerService.GetAnswerBySubmissionID(ctx.Request.Context(), submissionID)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	ctx.JSON(http.StatusOK, answers)
+}
+
+
 
 // func (answerController *answerController) GetAnswerByStudentID(ctx *gin.Context) {
 // 	var req dto.GetAnswerByStudentIDRequest

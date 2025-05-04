@@ -36,12 +36,7 @@ func (questionController *questionController) CreateAllQuestion(ctx *gin.Context
 	var request dto.CreateAllQuestionRequest
 	var response []dto.QuestionResponse
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		if err := ctx.ShouldBindJSON(&request.Questions); err != nil {
-			res := utils.FailedResponse(utils.FailedGetDataFromBody)
-			ctx.JSON(http.StatusBadRequest, res)
-			return
-		}
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		res := utils.FailedResponse(err.Error())
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
@@ -63,7 +58,7 @@ func (questionController *questionController) CreateAllQuestion(ctx *gin.Context
 func (questionController *questionController) CreateQuestion(ctx *gin.Context) {
 	var request dto.QuestionCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		res := utils.FailedResponse(err.Error())
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
@@ -107,19 +102,12 @@ func (questionController *questionController) GetQuestionByID(ctx *gin.Context) 
 }
 
 func (questionController *questionController) UpdateQuestion(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		res := utils.FailedResponse("invalid id format")
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
 	var request dto.QuestionUpdateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		res := utils.FailedResponse(err.Error())
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	request.Id = id
 	// fmt.Print(request)
 	question, err := questionController.questionService.UpdateQuestion(ctx.Request.Context(), &request)
 	if err != nil {

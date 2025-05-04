@@ -6,6 +6,7 @@ import (
 	repository "assesment/repository"
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -23,13 +24,15 @@ type (
 	questionService struct {
 		questionRepo repository.QuestionRepository
 		assesRepo  repository.AssessmentRepository
+		choiceRepo repository.ChoiceRepository
 	}
 )
 
-func NewQuestionService(questionRepo repository.QuestionRepository, assesRepo repository.AssessmentRepository) QuestionService {
+func NewQuestionService(questionRepo repository.QuestionRepository, assesRepo repository.AssessmentRepository, choiceRepo repository.ChoiceRepository) QuestionService {
 	return &questionService{
 		questionRepo: questionRepo,
 		assesRepo:  assesRepo,
+		choiceRepo: choiceRepo,
 	}
 }
 
@@ -110,17 +113,39 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("aftercheck entity" )
 	data := entities.Question{
 		ID: questionEntity.ID,
 		QuestionText: question.QuestionText,
 		EvaluationID: question.EvaluationID,
 	}
 	// fmt.Println(question)
-	updatedQuestion, err := questionService.questionRepo.UpdateQuestion(ctx, nil, &data)
+	_, err = questionService.questionRepo.UpdateQuestion(ctx, nil, &data)
 	if err != nil {
 		return nil, err
 	}
-	return updatedQuestion, nil
+	for _, choice := range question.Choices {
+		err := questionService.choiceRepo.DeleteChoice(ctx, nil, choice.ID)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("after delete choice") // hanya muncul jika delete sukses
+		data := entities.Choice{
+			ChoiceText: choice.ChoiceText,
+			IsCorrect:  choice.IsCorrect,
+			QuestionID: questionEntity.ID,
+		}
+		_, err = questionService.choiceRepo.CreateChoice(ctx, nil, &data)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+	afterQuestion, err := questionService.questionRepo.GetQuestionByID(ctx, nil, questionEntity.ID)
+	if err != nil {
+		return nil, err
+	}
+	return afterQuestion, nil
 }
 
 func (questionService *questionService) DeleteQuestion(ctx context.Context, id uuid.UUID) error {

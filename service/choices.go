@@ -15,6 +15,7 @@ type (
 		GetChoiceByID(ctx context.Context, id uuid.UUID) (dto.ChoiceResponse, error)
 		UpdateChoice(ctx context.Context, choice *dto.ChoiceUpdateRequest) (*entities.Choice, error)
 		GetChoiceByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Choice, error)
+		DeleteChoice(ctx context.Context, id uuid.UUID) error
 	}
 	choiceService struct {
 		choiceRepo repository.ChoiceRepository
@@ -82,3 +83,13 @@ func (choiceService *choiceService) GetChoiceByQuestionID(ctx context.Context, q
 	return choices, nil
 }
 
+func (choiceService *choiceService) DeleteChoice(ctx context.Context, id uuid.UUID) error {
+	_, err := choiceService.choiceRepo.GetChoiceByID(ctx, nil, id)
+	if err != nil {
+		return err
+	}
+	if err := choiceService.choiceRepo.DeleteChoice(ctx, nil, id); err != nil {
+		return err
+	}
+	return nil
+}

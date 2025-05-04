@@ -33,7 +33,8 @@ func ProvideQuestionDependencies(injector *do.Injector){
 
 	questionRepository := repository.NewQuestionRepository(db)
 	assesmentRepository := repository.NewAssessmentRepository(db)
-	questionService := service.NewQuestionService(questionRepository,assesmentRepository)
+	choiceRepository := repository.NewChoiceRepository(db)
+	questionService := service.NewQuestionService(questionRepository,assesmentRepository, choiceRepository)
 
 	do.Provide(injector, func (i *do.Injector) (controller.QuestionController, error){
 		return controller.NewQuestionController(questionService),nil
