@@ -12,16 +12,19 @@ import (
 
 type (
 	AssessmentController interface {
+		// Teacher
 		CreateAssessment(ctx *gin.Context)
-		GetAllAssessments(ctx *gin.Context) 
-		GetAssessmentByID(ctx *gin.Context) 	
+		TeacherGetAssessmentByID(ctx *gin.Context) 	
 		UpdateAssessment(ctx *gin.Context) 
 		DeleteAssessment(ctx *gin.Context) 
 		GetAllAssesmentByClassID(ctx *gin.Context)
 
 		// Student
-		GetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context)
+		StudentGetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context)
 		GetAssessmentByIDAndUserID(ctx *gin.Context)
+
+		// Lintas Service
+		ServiceGetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context)
 	}
 	assesmentController struct {
 	assesmentService service.AssessmentService
@@ -34,6 +37,41 @@ func NewAssessmentController(assesmentService service.AssessmentService) Assessm
 	}
 }
 
+func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gin.Context) {
+	classID,err := uuid.Parse(ctx.Param("classID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	assessments, err := assesmentController.assesmentService.GetAllAssesmentByClassID(ctx.Request.Context(), classID)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res := utils.SuccessResponse(assessments)
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (assesmentController *assesmentController) TeacherGetAssessmentByID(ctx *gin.Context) {
+	id,err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	assesment, err := assesmentController.assesmentService.TeacherGetAssessmentByID(ctx.Request.Context(), id)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res := utils.SuccessResponse(assesment)
+	ctx.JSON(http.StatusOK, res)
+}
+
+// ===========================================Teacher==================================================
 func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Context) {
 	var request dto.AssessmentCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -50,50 +88,6 @@ func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Contex
 	}
 	res := utils.SuccessResponse(assesment)
 	ctx.JSON(http.StatusCreated, res)
-}
-
-func (assesmentController *assesmentController) GetAllAssessments(ctx *gin.Context) {
-	assessments, err := assesmentController.assesmentService.GetAllAssessments(ctx.Request.Context())
-	if err != nil {
-		res := utils.FailedResponse(err.Error())
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	res := utils.SuccessResponse(assessments)
-	ctx.JSON(http.StatusOK, res)
-}
-
-func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gin.Context) {
-	classID,err := uuid.Parse(ctx.Param("classID"))
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	assessments, err := assesmentController.assesmentService.GetAllAssesmentByClassID(ctx.Request.Context(), classID)
-	if err != nil {
-		res := utils.FailedResponse(err.Error())
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	ctx.JSON(http.StatusOK, assessments)
-}
-
-func (assesmentController *assesmentController) GetAssessmentByID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	assesment, err := assesmentController.assesmentService.GetAssessmentByID(ctx.Request.Context(), id)
-	if err != nil {
-		res := utils.FailedResponse(err.Error())
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	res := utils.SuccessResponse(assesment)
-	ctx.JSON(http.StatusOK, res)
 }
 
 func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Context) {
@@ -141,29 +135,7 @@ func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Contex
 }
 
 
-// Student
-func (assesmentController *assesmentController) GetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context) {
-	classID,err := uuid.Parse(ctx.Param("classID"))
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	userID,err := uuid.Parse(ctx.Param("userID"))
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	assessments, err := assesmentController.assesmentService.StudentGetAllAssesmentByClassIDAndUserID(ctx.Request.Context(), classID,userID)
-	if err != nil {
-		res := utils.FailedResponse(err.Error())
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	ctx.JSON(http.StatusOK, assessments)
-}
-
+// ==========================================Student==================================================
 func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -186,3 +158,71 @@ func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *
 	res := utils.SuccessResponse(assesment)
 	ctx.JSON(http.StatusOK, res)
 }
+func (assesmentController *assesmentController) StudentGetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context) {
+	classID,err := uuid.Parse(ctx.Param("classID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	userID,err := uuid.Parse(ctx.Param("userID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	assessments, err := assesmentController.assesmentService.StudentGetAllAssesmentByClassIDAndUserID(ctx.Request.Context(), classID,userID)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res := utils.SuccessResponse(assessments)
+	ctx.JSON(http.StatusOK, res)
+}
+
+
+//=================================== Lintas Service======================================================
+func (assesmentController *assesmentController) ServiceGetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context) {
+	classID,err := uuid.Parse(ctx.Param("classID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	userID,err := uuid.Parse(ctx.Param("userID"))
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	assessments, err := assesmentController.assesmentService.StudentGetAllAssesmentByClassIDAndUserID(ctx.Request.Context(), classID,userID)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	// res := utils.SuccessResponse(assessments)
+	ctx.JSON(http.StatusOK, assessments)
+}
+
+
+
+
+
+
+
+
+
+// Unused code
+// GetAllAssessments(ctx *gin.Context) 
+// func (assesmentController *assesmentController) GetAllAssessments(ctx *gin.Context) {
+// 	assessments, err := assesmentController.assesmentService.GetAllAssessments(ctx.Request.Context())
+// 	if err != nil {
+// 		res := utils.FailedResponse(err.Error())
+// 		ctx.JSON(http.StatusBadRequest, res)
+// 		return
+// 	}
+// 	res := utils.SuccessResponse(assessments)
+// 	ctx.JSON(http.StatusOK, res)
+// }

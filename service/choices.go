@@ -13,7 +13,7 @@ type (
 	ChoiceService interface {
 		CreateChoice(ctx context.Context, choice *dto.ChoiceCreateRequest) (dto.ChoiceResponse, error)
 		GetChoiceByID(ctx context.Context, id uuid.UUID) (dto.ChoiceResponse, error)
-		UpdateChoice(ctx context.Context, choice *dto.ChoiceUpdateRequest) (*entities.Choice, error)
+		// UpdateChoice(ctx context.Context, choice *dto.ChoiceUpdateRequest) (*entities.Choice, error)
 		GetChoiceByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Choice, error)
 		DeleteChoice(ctx context.Context, id uuid.UUID) error
 	}
@@ -55,25 +55,25 @@ func (choiceService *choiceService) GetChoiceByID(ctx context.Context, id uuid.U
 	return choice, nil
 }
 
-func (choiceService *choiceService) UpdateChoice(ctx context.Context, choice *dto.ChoiceUpdateRequest) (*entities.Choice, error) {
-	choiceEntity, err := choiceService.choiceRepo.GetChoiceByID(ctx, nil, choice.ID)
-	if err != nil {
-		return nil, err
-	}
+// func (choiceService *choiceService) UpdateChoice(ctx context.Context, choice *dto.ChoiceUpdateRequest) (*entities.Choice, error) {
+// 	choiceEntity, err := choiceService.choiceRepo.GetChoiceByID(ctx, nil, choice.ID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 	
-	data := entities.Choice{
-		ID: choiceEntity.ID,
-		ChoiceText: choice.ChoiceText,
-		IsCorrect: choice.IsCorrect,		
-		QuestionID: choiceEntity.QuestionID,
-	}		
-	updatedChoice, err := choiceService.choiceRepo.UpdateChoice(ctx, nil, &data)
+// 	data := entities.Choice{
+// 		ID: choiceEntity.ID,
+// 		ChoiceText: choice.ChoiceText,
+// 		IsCorrect: choice.IsCorrect,		
+// 		QuestionID: choiceEntity.QuestionID,
+// 	}		
+// 	updatedChoice, err := choiceService.choiceRepo.UpdateChoice(ctx, nil, &data)
 	
-	if err != nil {
-		return nil, err
-	}
-	return updatedChoice, nil
-}
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return updatedChoice, nil
+// }
 
 func (choiceService *choiceService) GetChoiceByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Choice, error) {
 	choices, err := choiceService.choiceRepo.GetChoiceByQuestionID(ctx, nil, questionID)

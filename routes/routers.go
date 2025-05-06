@@ -8,7 +8,8 @@ import (
 func RegisterRoutes(server *gin.Engine, injector *do.Injector) {
 	Assessment(server, injector)
 	Question(server, injector)
-	Choice(server, injector)
 	Answer(server, injector)
 	Submission(server, injector)
+	Service(server, injector)
+	// Choice(server, injector)
 }

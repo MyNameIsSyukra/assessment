@@ -10,21 +10,20 @@ import (
 func Assessment(route *gin.Engine, injector *do.Injector) {
 	asssessmentController := do.MustInvoke[controller.AssessmentController](injector)
 
-	routes := route.Group("/api/v1/assessment")
+	routes := route.Group("teacher/assessment")
 	{
 		routes.POST("", asssessmentController.CreateAssessment)
-		routes.GET("", asssessmentController.GetAllAssessments)
-		routes.GET("/:id", asssessmentController.GetAssessmentByID)
+		routes.GET("/:id", asssessmentController.TeacherGetAssessmentByID)
 		routes.PUT("/:id", asssessmentController.UpdateAssessment)
 		routes.DELETE("/:id", asssessmentController.DeleteAssessment)
 		routes.GET("/class/:classID", asssessmentController.GetAllAssesmentByClassID)
+		// routes.GET("", asssessmentController.GetAllAssessments)
 	}
 
 	// Student routes
-	routes = route.Group("/api/v1/student/assessment")
+	routes = route.Group("/student/assessment")
 	{
-		routes.GET("/class/:classID/:userID", asssessmentController.GetAllAssesmentByClassIDAssesmentFlag)
 		routes.GET("/:id/:userID", asssessmentController.GetAssessmentByIDAndUserID)
+		routes.GET("/class/:classID/:userID", asssessmentController.StudentGetAllAssesmentByClassIDAssesmentFlag)
 	}
-
 }

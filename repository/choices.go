@@ -13,9 +13,10 @@ type (
 	ChoiceRepository interface {
 		CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
 		GetChoiceByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (dto.ChoiceResponse, error)
-		UpdateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
+		// UpdateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
 		GetChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Choice, error)
 		DeleteChoice(ctx context.Context, tx *gorm.DB, id uuid.UUID) error
+		DeleteChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) error
 	}
 	choiceRepository struct {
 		Db *gorm.DB
@@ -65,6 +66,13 @@ func (choiceRepo *choiceRepository) GetChoiceByQuestionID(ctx context.Context, t
 
 func (choiceRepo *choiceRepository) DeleteChoice(ctx context.Context, tx *gorm.DB, id uuid.UUID) error {
 	if err := choiceRepo.Db.Where("id = ?", id).Delete(&entities.Choice{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (choiceRepo *choiceRepository) DeleteChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) error {
+	if err := choiceRepo.Db.Where("question_id = ?", questionID).Delete(&entities.Choice{}).Error; err != nil {
 		return err
 	}
 	return nil

@@ -6,71 +6,44 @@ import (
 	repository "assesment/repository"
 	"assesment/utils"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 )
 
 type (
 	AssessmentService interface {
+		// Teacher
 		CreateAssessment(ctx context.Context,assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error)
-		GetAllAssessments(ctx context.Context)(dto.GetAllAssessmentsResponse, error)
-		GetAssessmentByID(ctx context.Context, id uuid.UUID) (*entities.Assessment, error)
-		GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error)
+		TeacherGetAssessmentByID(ctx context.Context, id uuid.UUID) (dto.GetAssesmentByIDResponseTeacher, error)
 		UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error)
 		DeleteAssessment(ctx context.Context, id uuid.UUID) error
-
+		
+		GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error)
 		// Student
 		StudentGetAllAssesmentByClassIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)([]dto.StudentGetAllAssesmentByClassIDResponse, error)
 		GetAssessmentByIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)(dto.GetAssessmentByIDAndByUserIDResponse, error)
+
+		// Unused
+		// GetAllAssessments(ctx context.Context)(dto.GetAllAssessmentsResponse, error)
 	}
 	assesmentService struct {
 		assesmentRepo repository.AssessmentRepository
+		submissionRepo repository.SubmissionRepository
 	}
 )
 
-func NewAssessmentService(assesmentRepo repository.AssessmentRepository) AssessmentService {
+func NewAssessmentService(assesmentRepo repository.AssessmentRepository,submissionRepo repository.SubmissionRepository) AssessmentService {
 	return &assesmentService{
 		assesmentRepo: assesmentRepo,
+		submissionRepo: submissionRepo,
 	}
-}
-
-func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error) {
-	assesmentEntity := entities.Assessment{
-		ClassID: assesment.ClassId,
-		Name: assesment.Name,
-		CreatedAt: assesment.Date_created,
-		StartTime: assesment.Start_time,
-		EndTime: assesment.End_time,
-	}
-	
-	createdAssessment, err := assesmentService.assesmentRepo.CreateAssessment(ctx, nil, &assesmentEntity)
-	if err != nil {
-		return dto.AssessmentCreateResponse{}, utils.ErrCreateAssesment
-	}
-	res := dto.AssessmentCreateResponse{
-		ID: createdAssessment.ID,
-		Name: createdAssessment.Name,
-		ClassId: createdAssessment.ClassID,
-		Start_time: createdAssessment.StartTime,
-		End_time: createdAssessment.EndTime,
-		Date_created: createdAssessment.CreatedAt,
-		Updated_At: createdAssessment.UpdatedAt,
-	}
-	return res, nil	
-}
-
-func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context) (dto.GetAllAssessmentsResponse, error) {
-	assessments, err := assesmentService.assesmentRepo.GetAllAssessments()
-	if len(assessments) == 0 {
-		return dto.GetAllAssessmentsResponse{}, utils.ErrGetAllAssesments
-	}
-	if err != nil {
-		return dto.GetAllAssessmentsResponse{}, err
-	}
-	return dto.GetAllAssessmentsResponse{
-		Assessments: assessments,
-	}, nil
 }
 
 func (assesmentService *assesmentService) GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error) {
@@ -87,15 +60,86 @@ func (assesmentService *assesmentService) GetAllAssesmentByClassID(ctx context.C
 	return assessments, nil
 }
 
-func (assesmentService *assesmentService) GetAssessmentByID(ctx context.Context, id uuid.UUID) (*entities.Assessment,error){
-	assesment, err := assesmentService.assesmentRepo.GetAssessmentByID(ctx,nil,id)
-	if assesment == nil {
-		return nil, utils.ErrGetAssesmentByID
+// teacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacher
+func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error) {
+	assesmentEntity := entities.Assessment{
+		ClassID: assesment.ClassId,
+		Name: assesment.Name,
+		Duration: assesment.Duration,
+		CreatedAt: assesment.Date_created,
+		StartTime: assesment.Start_time,
+		EndTime: assesment.End_time,
 	}
+	
+	createdAssessment, err := assesmentService.assesmentRepo.CreateAssessment(ctx, nil, &assesmentEntity)
 	if err != nil {
-		return nil, err
+		return dto.AssessmentCreateResponse{}, utils.ErrCreateAssesment
 	}
-	return assesment, nil
+	res := dto.AssessmentCreateResponse{
+		ID: createdAssessment.ID,
+		Name: createdAssessment.Name,
+		ClassId: createdAssessment.ClassID,
+		Start_time: createdAssessment.StartTime,
+		Duration: createdAssessment.Duration,
+		End_time: createdAssessment.EndTime,
+		Date_created: createdAssessment.CreatedAt,
+		Updated_At: createdAssessment.UpdatedAt,
+	}
+	return res, nil	
+}
+
+
+func (assesmentService *assesmentService) TeacherGetAssessmentByID(ctx context.Context, id uuid.UUID) (dto.GetAssesmentByIDResponseTeacher,error){
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+	urlClassSerivice := os.Getenv("CLASS_SERVICE_URL")
+	assesment, err := assesmentService.assesmentRepo.GetAssessmentByID(ctx,nil,id)
+	if err != nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	if assesment == nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	submission,err := assesmentService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil,id)
+	if err != nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	if submission == nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	url := fmt.Sprintf("%s/service/class/%s",urlClassSerivice,assesment.ClassID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	defer resp.Body.Close()
+	// Baca body response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	// fmt.Print(body)
+	// Unmarshal JSON ke struct
+	var member []dto.GetMemberResponse
+	err = json.Unmarshal(body, &member)
+	if err != nil {
+		return dto.GetAssesmentByIDResponseTeacher{}, err
+	}
+	// member := 
+	totalSubmission := len(submission)
+	totalStudent := len(member)
+	return dto.GetAssesmentByIDResponseTeacher{
+		ID: assesment.ID,
+		Name: assesment.Name,
+		Duration: assesment.Duration,
+		StartTime: assesment.StartTime,
+		EndTime: assesment.EndTime,
+		TotalSubmission: totalSubmission,
+		TotalStudent: totalStudent,
+		Questions: assesment.Questions,
+	}, nil
 }
 
 func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
@@ -110,6 +154,7 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 		ID: ass.ID,
 		ClassID: ass.ClassID,
 		Name: assesment.Name,
+		Duration: assesment.Duration,
 		CreatedAt: assesment.Date_created,
 		StartTime: assesment.Start_time,
 		EndTime: assesment.End_time,
@@ -139,7 +184,7 @@ func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context,
 }
 
 
-// Student
+// StudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudent
 func (assesmentService *assesmentService) StudentGetAllAssesmentByClassIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)([]dto.StudentGetAllAssesmentByClassIDResponse, error){
 	assessments, err := assesmentService.assesmentRepo.StudentGetAllAssesmentByClassIDAndUserID(ctx, nil, classID,userID)
 	if len(assessments) == 0 {
@@ -165,9 +210,45 @@ func (assesmentService *assesmentService) GetAssessmentByIDAndUserID(ctx context
 
 	return dto.GetAssessmentByIDAndByUserIDResponse{
 		Assessment: assessments.Assessment,
+		SubmittedAnswer: assessments.SubmittedAnswer,
+		Question: assessments.Question,
 		SubmissionStatus: assessments.SubmissionStatus,
 		SubmissionID: assessments.SubmissionID,
 	}, nil 
 }
 
 // Antar Service
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// func (assesmentService *assesmentService) GetAllAssessments (ctx context.Context) (dto.GetAllAssessmentsResponse, error) {
+// 	assessments, err := assesmentService.assesmentRepo.GetAllAssessments()
+// 	if len(assessments) == 0 {
+// 		return dto.GetAllAssessmentsResponse{}, utils.ErrGetAllAssesments
+// 	}
+// 	if err != nil {
+// 		return dto.GetAllAssessmentsResponse{}, err
+// 	}
+// 	return dto.GetAllAssessmentsResponse{
+// 		Assessments: assessments,
+// 	}, nil
+// }

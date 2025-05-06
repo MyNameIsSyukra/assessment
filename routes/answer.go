@@ -10,7 +10,7 @@ import (
 func Answer(route *gin.Engine, injector *do.Injector) {
 	answerController := do.MustInvoke[controller.AnswerController](injector)
 
-	routes := route.Group("/api/v1/answer")
+	routes := route.Group("/api/answer")
 	{
 		routes.POST("", answerController.CreateAnswer)
 		routes.GET("", answerController.GetAllAnswers)

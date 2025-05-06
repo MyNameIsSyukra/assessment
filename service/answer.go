@@ -46,6 +46,9 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 	if submission.Status != "in_progress" {
 		return dto.AnswerResponse{}, errors.New("submission is not in progress")
 	}
+	if submission.EndedTime.Before(time.Now()) {
+		return dto.AnswerResponse{}, errors.New("submission has ended")
+	}
 	
 	assement, err := answerService.assesmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
 	if err != nil {

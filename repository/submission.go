@@ -19,7 +19,6 @@ type (
 		GetSubmissionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByUserID(ctx context.Context, tx *gorm.DB, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, bool,error)
-		GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error)
 		Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error)
 	}
 	submissionRepository struct {
@@ -83,7 +82,7 @@ func (submissionRepo *submissionRepository) DeleteSubmission(ctx context.Context
 
 func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Submission, error) {
 	var submissions []entities.Submission
-	if err := submissionRepo.Db.Where("assessment_id = ?", assessmentID).Find(&submissions).Error; err != nil {
+	if err := submissionRepo.Db.Where("assessment_id = ?", assessmentID).Preload("Assessment").Find(&submissions).Error; err != nil {
 		return nil, err
 	}
 	return submissions, nil
@@ -103,14 +102,6 @@ func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndUserI
 		return nil, false, err
 	}
 	return &submission, true, nil
-}
-
-func (submissionRepo *submissionRepository) GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error) {
-	var submissions []entities.Submission
-	if err := submissionRepo.Db.Where("assessment_id = ? AND class_id = ?", assessmentID, classID).Find(&submissions).Error; err != nil {
-		return nil, err
-	}
-	return submissions, nil
 }
 
 func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error) {

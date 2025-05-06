@@ -4,6 +4,7 @@ import (
 	dto "assesment/dto"
 	service "assesment/service"
 	"assesment/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,13 +16,13 @@ type (
 		CreateSubmission(ctx *gin.Context)
 		GetAllSubmissions(ctx *gin.Context)
 		GetSubmissionByID(ctx *gin.Context)
-		// UpdateSubmission(ctx *gin.Context)
 		DeleteSubmission(ctx *gin.Context)
-		GetSubmissionsByAssessmentID(ctx *gin.Context)
 		GetSubmissionsByUserID(ctx *gin.Context)
-		GetSubmissionsByAssessmentIDAndUserID(ctx *gin.Context)
-		GetSubmissionsByAssessmentIDAndClassID(ctx *gin.Context)
+		// GetSubmissionsByAssessmentIDAndUserID(ctx *gin.Context)
+		GetStudentSubmissionsByAssessmentID(ctx *gin.Context)
 		Submitted(ctx *gin.Context)
+		// UpdateSubmission(ctx *gin.Context)
+		// GetSubmissionsByAssessmentID(ctx *gin.Context)
 	}
 
 	submissionController struct {
@@ -79,21 +80,7 @@ func (submissionController *submissionController) GetSubmissionByID(ctx *gin.Con
 	res := utils.SuccessResponse(submission)
 	ctx.JSON(http.StatusOK, res)
 }
-// func (submissionController *submissionController) UpdateSubmission(ctx *gin.Context) {
-// 	id := ctx.Param("id")
-// 	var request dto.SubmissionUpdateRequest
-// 	if err := ctx.ShouldBindJSON(&request); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	request.Id = id
-// 	submission, err := submissionController.submissionService.UpdateSubmission(ctx.Request.Context(), &request)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	ctx.JSON(http.StatusOK, submission)
-// }
+
 
 func (submissionController *submissionController) DeleteSubmission(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
@@ -107,20 +94,6 @@ func (submissionController *submissionController) DeleteSubmission(ctx *gin.Cont
 		return
 	}
 	ctx.JSON(http.StatusNoContent, nil)
-}
-
-func (submissionController *submissionController) GetSubmissionsByAssessmentID(ctx *gin.Context) {
-	assessmentID,err := uuid.Parse(ctx.Param("assessment_id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-	submissions, err := submissionController.submissionService.GetSubmissionsByAssessmentID(ctx.Request.Context(), assessmentID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(http.StatusOK, submissions)
 }
 
 func (submissionController *submissionController) GetSubmissionsByUserID(ctx *gin.Context) {
@@ -156,25 +129,6 @@ func (submissionController *submissionController) GetSubmissionsByAssessmentIDAn
 	ctx.JSON(http.StatusOK, submission)
 }
 
-func (submissionController *submissionController) GetSubmissionsByAssessmentIDAndClassID(ctx *gin.Context) {
-	assessmentID,err := uuid.Parse(ctx.Param("assessment_id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-	classID,err := uuid.Parse(ctx.Param("class_id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-	submissions, err := submissionController.submissionService.GetSubmissionsByAssessmentIDAndClassID(ctx.Request.Context(), assessmentID, classID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(http.StatusOK, submissions)
-}
-
 func (submissionController *submissionController) Submitted(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -189,4 +143,52 @@ func (submissionController *submissionController) Submitted(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, submission)
 }
 
+func (submissionController *submissionController)GetStudentSubmissionsByAssessmentID(ctx *gin.Context)(){
+	id,err := uuid.Parse(ctx.Param("submissionID"))
+	flag := ctx.Query("status")
+	fmt.Println(flag)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	submissions, err := submissionController.submissionService.GetStudentSubmissionsByAssessmentID(ctx.Request.Context(),id,flag)
+	if err != nil {
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest,res)
+		return
+	}
+	res := utils.SuccessResponse(submissions)
+	ctx.JSON(http.StatusOK,res)
+}
 
+
+// func (submissionController *submissionController) GetSubmissionsByAssessmentID(ctx *gin.Context) {
+// 	assessmentID,err := uuid.Parse(ctx.Param("assessment_id"))
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+// 		return
+// 	}
+// 	submissions, err := submissionController.submissionService.GetSubmissionsByAssessmentID(ctx.Request.Context(), assessmentID)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	ctx.JSON(http.StatusOK, submissions)
+// }
+
+// func (submissionController *submissionController) UpdateSubmission(ctx *gin.Context) {
+// 	id := ctx.Param("id")
+// 	var request dto.SubmissionUpdateRequest
+// 	if err := ctx.ShouldBindJSON(&request); err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	request.Id = id
+// 	submission, err := submissionController.submissionService.UpdateSubmission(ctx.Request.Context(), &request)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	ctx.JSON(http.StatusOK, submission)
+// }

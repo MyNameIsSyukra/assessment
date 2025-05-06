@@ -21,7 +21,8 @@ func ProvideEvaluationDependencies(injector *do.Injector){
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
 
 	assesmentRepository := repository.NewAssessmentRepository(db)
-	assesmentService := service.NewAssessmentService(assesmentRepository)
+	submissionReRepository := repository.NewSubmissionRepository(db)
+	assesmentService := service.NewAssessmentService(assesmentRepository,submissionReRepository)
 
 	do.Provide(injector, func (i *do.Injector) (controller.AssessmentController, error){
 		return controller.NewAssessmentController(assesmentService),nil
@@ -70,7 +71,8 @@ func ProvideSubmissionDependencies(injector *do.Injector){
 
 	submissionRepository := repository.NewSubmissionRepository(db)
 	questionRepository := repository.NewQuestionRepository(db)
-	submissionService := service.NewSubmissionService(submissionRepository, questionRepository)
+	assesmentRepository := repository.NewAssessmentRepository(db)
+	submissionService := service.NewSubmissionService(submissionRepository, questionRepository, assesmentRepository)
 
 	do.Provide(injector, func (i *do.Injector) (controller.SubmissionController, error){
 		return controller.NewSubmissionController(submissionService),nil

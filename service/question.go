@@ -113,7 +113,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("aftercheck entity" )
+	// fmt.Println("aftercheck entity" )
 	data := entities.Question{
 		ID: questionEntity.ID,
 		QuestionText: question.QuestionText,
@@ -124,12 +124,13 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	if err != nil {
 		return nil, err
 	}
+
+	err = questionService.choiceRepo.DeleteChoiceByQuestionID(ctx, nil, question.Id)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("after delete choice") // hanya muncul jika delete sukses
 	for _, choice := range question.Choices {
-		err := questionService.choiceRepo.DeleteChoice(ctx, nil, choice.ID)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Println("after delete choice") // hanya muncul jika delete sukses
 		data := entities.Choice{
 			ChoiceText: choice.ChoiceText,
 			IsCorrect:  choice.IsCorrect,

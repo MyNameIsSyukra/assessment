@@ -21,10 +21,13 @@ type Assessment struct {
     Name      string    `json:"name"`
     StartTime time.Time `json:"start_time"`
     EndTime   time.Time `json:"end_time"`
+    Duration int       `json:"duration"` // in Second
     CreatedAt time.Time `json:"date_created"`
     UpdatedAt time.Time `json:"updated_at"`
     ClassID   uuid.UUID `gorm:"type:uuid" json:"class_id"`
 
     // Relasi ke Question (Assessment has many Questions)
-    Questions []Question `gorm:"foreignKey:EvaluationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
+    Questions []Question `gorm:"foreignKey:EvaluationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"questions,omitempty"`
+    // Relasi ke Submission (Assessment has many Submissions)
+    Submissions []Submission `gorm:"foreignKey:AssessmentID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"submissions,omitempty"`
 }

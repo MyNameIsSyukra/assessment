@@ -5,8 +5,12 @@ import (
 	entities "assesment/entities"
 	repository "assesment/repository"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,24 +25,30 @@ type (
 		GetSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error)
-		GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error)
 		Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error)
+		GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string) ([]dto.GetSubmissionStudentResponse, error)
 	}
 	submissionService struct {
 		submissionRepo repository.SubmissionRepository
 		questionRepo  repository.QuestionRepository
+		assessmentRepo repository.AssessmentRepository
 	}
 )
 
-func NewSubmissionService(submissionRepo repository.SubmissionRepository, questionRepo repository.QuestionRepository) SubmissionService {
+func NewSubmissionService(submissionRepo repository.SubmissionRepository, questionRepo repository.QuestionRepository, assessmentRepo repository.AssessmentRepository) SubmissionService {
 	return &submissionService{
 		submissionRepo: submissionRepo,
 		questionRepo:  questionRepo,
+		assessmentRepo: assessmentRepo,
 	}
 }
 
 func (submissionService *submissionService) CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error) {
 	var question []entities.Question
+	assesment, errr := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
+	if errr != nil {
+		return dto.SubmissionCreateResponse{}, errr
+	}
 	_,flag, _ := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
 	// check if the submission already exists
 	if flag {
@@ -48,9 +58,8 @@ func (submissionService *submissionService) CreateSubmission(ctx context.Context
 		UserID: 	 submission.UserID,
 		AssessmentID: submission.AssessmentID,
 		Status: "in_progress",
+		EndedTime: time.Now().Add(time.Duration(assesment.Duration) * time.Second),
 	}
-
-	fmt.Print(submissionEntity)
 
 	question, err := submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
 	if err != nil {
@@ -117,14 +126,6 @@ func (submissionService *submissionService) GetSubmissionsByAssessmentIDAndUserI
 	return submission, nil
 }
 
-func (submissionService *submissionService) GetSubmissionsByAssessmentIDAndClassID(ctx context.Context, assessmentID uuid.UUID, classID uuid.UUID) ([]entities.Submission, error) {
-	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndClassID(ctx, nil, assessmentID, classID)
-	if err != nil {
-		return nil, err
-	}
-	return submissions, nil
-}
-
 func (submissionService *submissionService) Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error) {
 	submission, err := submissionService.submissionRepo.GetSubmissionByID(ctx, nil, submissionID)
 	if err != nil {
@@ -142,6 +143,76 @@ func (submissionService *submissionService) Submitted(ctx context.Context, submi
 	}
 
 	return result, nil
+}
+
+func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID,flag string) ([]dto.GetSubmissionStudentResponse, error) {
+	class, err := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
+	if err != nil {
+		return nil, err
+	}
+	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
+	if err != nil {
+		return nil, err
+	}
+	classID := class.ClassID
+	url := fmt.Sprintf("http://localhost:8081/service/class/%s", classID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch data: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	var members []dto.GetSubmissionStudentResponse
+	if err := json.Unmarshal(body, &members); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+	
+	submissionMap := make(map[uuid.UUID]entities.Submission)
+	for _, s := range submissions {
+		// Gunakan user_id sebagai key (kalau ada banyak submission per user, bisa dihandle pakai slice)
+		submissionMap[s.UserID] = s
+	}
+	
+	status := entities.ExamStatus("todo")
+	var result []dto.GetSubmissionStudentResponse
+	for _, m := range members {
+		if m.Role == dto.RoleTeacher{
+			continue
+		}
+		sub := submissionMap[m.User_userID]
+		if sub.Status == "" {
+			sub.Status = status
+			m.ID = uuid.Nil
+		}
+		dto := dto.GetSubmissionStudentResponse{
+			ID:           m.ID,
+			Username:     m.Username,
+			User_userID:   m.User_userID,
+			Kelas_kelasID: m.Kelas_kelasID,
+			Role:         m.Role,
+			Status:       sub.Status,
+			Score:        sub.Score,
+			CreatedAt:    m.CreatedAt,
+			UpdatedAt:    m.UpdatedAt,
+			DeletedAt:    m.DeletedAt,
+		}
+		result = append(result, dto)
+	}
+	var res []dto.GetSubmissionStudentResponse
+	if flag == "" {
+		return result, nil
+	}
+	
+	for _, m := range result {
+		if m.Status == entities.ExamStatus(flag){
+			res = append(res, m)
+		}
+	}
+	return res, nil
 }
 
 

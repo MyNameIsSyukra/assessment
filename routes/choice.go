@@ -14,7 +14,7 @@ func Choice(route *gin.Engine, injector *do.Injector) {
 	{
 		routes.POST("", choiceController.CreateChoice)
 		routes.GET("/:id", choiceController.GetChoiceByID)
-		routes.PUT("/:id", choiceController.UpdateChoice)
 		routes.GET("/question/:id", choiceController.GetChoicesByQuestionID)
+		// routes.PUT("/:id", choiceController.UpdateChoice)
 	}
 }

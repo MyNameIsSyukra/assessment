@@ -13,7 +13,7 @@ type (
 	AssessmentRepository interface {
 	CreateAssessment(ctx context.Context, tx *gorm.DB, assesment *entities.Assessment) (*entities.Assessment, error)
 	GetAssessmentByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Assessment, error)
-	GetAllAssessments() ([]entities.Assessment, error)
+	// GetAllAssessments() ([]entities.Assessment, error)
 	GetAllAssesmentByClassID(ctx context.Context, tx *gorm.DB,classID uuid.UUID) ([]entities.Assessment, error)
 	UpdateAssessment(ctx context.Context, tx *gorm.DB,assesment *entities.Assessment) (*entities.Assessment, error)
 	DeleteAssessment(ctx context.Context, tx *gorm.DB,id string) error
@@ -40,7 +40,7 @@ func (assesmentRepo *assesmentRepository) CreateAssessment(ctx context.Context, 
 
 func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context, tx *gorm.DB,id uuid.UUID) (*entities.Assessment, error) {
 	var assesment entities.Assessment
-	if err := assesmentRepo.Db.Where("id = ?", id).First(&assesment).Error; err != nil {
+	if err := assesmentRepo.Db.Where("id = ?", id).Preload("Questions").First(&assesment).Error; err != nil {
 		return nil, err
 	}
 	return &assesment, nil
@@ -50,15 +50,6 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context,
 func (assesmentRepo *assesmentRepository) GetAllAssesmentByClassID(ctx context.Context, tx *gorm.DB,classID uuid.UUID) ([]entities.Assessment, error) {
 	var assessments []entities.Assessment
 	if err := assesmentRepo.Db.Where("class_id = ?", classID).Find(&assessments).Error; err != nil {
-		return nil, err
-	}
-
-	return assessments, nil
-}
-
-func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assessment, error) {
-	var assessments []entities.Assessment
-	if err := assesmentRepo.Db.Find(&assessments).Error; err != nil {
 		return nil, err
 	}
 
@@ -97,6 +88,7 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 		data.ClassID = assessments[i].ClassID
 		data.ID = assessments[i].ID
 		data.Name = assessments[i].Name
+		data.Duration = assessments[i].Duration
 		data.StartTime = assessments[i].StartTime
 		data.EndTime = assessments[i].EndTime
 		data.CreatedAt = assessments[i].CreatedAt
@@ -129,6 +121,8 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 	if submission.ID != uuid.Nil {
 		response := &dto.GetAssessmentByIDAndByUserIDResponse{
 			Assessment:      assessment,
+			SubmittedAnswer: len(submission.Answers),
+			Question:        len(assessment.Questions),
 			SubmissionStatus: submission.Status,
 			SubmissionID:    &submission.ID,
 		}
@@ -136,8 +130,52 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 	}
 	response := &dto.GetAssessmentByIDAndByUserIDResponse{
 		Assessment:      assessment,
+		SubmittedAnswer: 0,
+		Question:        len(assessment.Questions),
 		SubmissionStatus: submission.Status,
 		SubmissionID:    nil,
 	}
 	return response, nil
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assessment, error) {
+// 	var assessments []entities.Assessment
+// 	if err := assesmentRepo.Db.Find(&assessments).Error; err != nil {
+// 		return nil, err
+// 	}
+
+// 	return assessments, nil
+// }

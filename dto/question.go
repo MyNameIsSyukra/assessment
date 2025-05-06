@@ -37,7 +37,7 @@ type QuestionUpdateRequest struct {
 	Id           uuid.UUID `json:"id" binding:"required"`
 	QuestionText string `json:"question_text"`
 	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id" binding:"required"`
-	Choices      []ChoiceUpdateRequest `json:"choices" binding:"required,dive"`
+	Choices      []ChoiceCreateRequest `json:"choices" binding:"required,dive"`
 }
 
 type QuestionResponse struct {
