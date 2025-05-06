@@ -21,8 +21,14 @@ func args(db *gorm.DB) bool {
 			print("Migration completed successfully")
             return false
         }
+		if (os.Args[1] == "seed") {
+			migration.Seeder()
+			print("Seeding completed successfully")
+		return false
+		}
     }
-        return true
+	
+    return true
 }
 
 
