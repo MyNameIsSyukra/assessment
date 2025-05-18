@@ -10,14 +10,14 @@ import (
 func Answer(route *gin.Engine, injector *do.Injector) {
 	answerController := do.MustInvoke[controller.AnswerController](injector)
 
-	routes := route.Group("/api/answer")
+	routes := route.Group("/answer")
 	{
+		// routes.GET("", answerController.GetAllAnswers)
+		// routes.GET("/:id", answerController.GetAnswerByID)
 		routes.POST("", answerController.CreateAnswer)
-		routes.GET("", answerController.GetAllAnswers)
-		routes.GET("/:id", answerController.GetAnswerByID)
 		routes.PUT("/:id", answerController.UpdateAnswer)
-		routes.GET("/question/:question_id", answerController.GetAnswerByQuestionID)
-		routes.GET("/submission/:submission_id", answerController.GetAnswerBySubmissionID)	
+		routes.GET("/question/", answerController.GetAnswerByQuestionID)
+		routes.GET("/submission/", answerController.GetAnswerBySubmissionID)	
 		// routes.GET("/student/:student_id", answerController.GetAnswerByStudentID)
 	}
 }

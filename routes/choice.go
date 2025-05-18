@@ -13,8 +13,8 @@ func Choice(route *gin.Engine, injector *do.Injector) {
 	routes := route.Group("/api/v1/choice")
 	{
 		routes.POST("", choiceController.CreateChoice)
-		routes.GET("/:id", choiceController.GetChoiceByID)
-		routes.GET("/question/:id", choiceController.GetChoicesByQuestionID)
+		routes.GET("/", choiceController.GetChoiceByID)
+		routes.GET("/question/", choiceController.GetChoicesByQuestionID)
 		// routes.PUT("/:id", choiceController.UpdateChoice)
 	}
 }

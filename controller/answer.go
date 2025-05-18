@@ -61,7 +61,7 @@ func (answerController *answerController) GetAllAnswers(ctx *gin.Context) {
 }
 
 func (answerController *answerController) GetAnswerByID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -78,7 +78,7 @@ func (answerController *answerController) GetAnswerByID(ctx *gin.Context) {
 }
 
 func (answerController *answerController) UpdateAnswer(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -102,7 +102,7 @@ func (answerController *answerController) UpdateAnswer(ctx *gin.Context) {
 }
 
 func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context) {
-	questionID,err := uuid.Parse(ctx.Param("question_id"))
+	questionID,err := uuid.Parse(ctx.Query("question_id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -119,7 +119,7 @@ func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context
 }
 
 func (answerController *answerController) GetAnswerBySubmissionID(ctx *gin.Context) {
-	submissionID, err := uuid.Parse(ctx.Param("submission_id"))
+	submissionID, err := uuid.Parse(ctx.Query("submission_id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)

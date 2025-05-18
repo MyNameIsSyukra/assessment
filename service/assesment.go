@@ -48,14 +48,14 @@ func NewAssessmentService(assesmentRepo repository.AssessmentRepository,submissi
 
 func (assesmentService *assesmentService) GetAllAssesmentByClassID(ctx context.Context, classID uuid.UUID) ([]entities.Assessment, error) {
 	assessments, err := assesmentService.assesmentRepo.GetAllAssesmentByClassID(ctx, nil, classID)
+	if err != nil {
+		return []entities.Assessment{}, err
+	}
 	if len(assessments) == 0 {
-		return nil, utils.ErrGetAllAssesmentByClassID
+		return []entities.Assessment{}, err
 	}
 	if assessments == nil {
-		return nil, utils.ErrGetAllAssesmentByClassID
-	}
-	if err != nil {
-		return nil, utils.ErrGetAllAssesmentByClassID
+		return []entities.Assessment{}, err
 	}
 	return assessments, nil
 }
@@ -145,10 +145,10 @@ func (assesmentService *assesmentService) TeacherGetAssessmentByID(ctx context.C
 func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
 	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.IdEvaluation)
 	if ass == nil {
-		return nil, errors.New("no assessment found")
+		return &entities.Assessment{}, errors.New("no assessment found")
 	}
 	if err != nil {
-		return nil, err
+		return &entities.Assessment{}, err
 	}
 	assesmentEntity := entities.Assessment{
 		ID: ass.ID,
@@ -162,7 +162,7 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 	
 	updatedAssessment, err := assesmentService.assesmentRepo.UpdateAssessment(ctx, nil, &assesmentEntity)
 	if err != nil {
-		return nil, err
+		return &entities.Assessment{}, err
 	}
 	return updatedAssessment, nil
 }
@@ -188,13 +188,13 @@ func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context,
 func (assesmentService *assesmentService) StudentGetAllAssesmentByClassIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)([]dto.StudentGetAllAssesmentByClassIDResponse, error){
 	assessments, err := assesmentService.assesmentRepo.StudentGetAllAssesmentByClassIDAndUserID(ctx, nil, classID,userID)
 	if len(assessments) == 0 {
-		return nil, utils.ErrGetAllAssesmentByClassID
+		return []dto.StudentGetAllAssesmentByClassIDResponse{}, utils.ErrGetAllAssesmentByClassID
 	}
 	if assessments == nil {
-		return nil, utils.ErrGetAllAssesmentByClassID
+		return []dto.StudentGetAllAssesmentByClassIDResponse{}, utils.ErrGetAllAssesmentByClassID
 	}
 	if err != nil {
-		return nil, utils.ErrGetAllAssesmentByClassID
+		return []dto.StudentGetAllAssesmentByClassIDResponse{}, utils.ErrGetAllAssesmentByClassID
 	}
 	return assessments, nil
 }

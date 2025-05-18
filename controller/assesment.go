@@ -38,7 +38,7 @@ func NewAssessmentController(assesmentService service.AssessmentService) Assessm
 }
 
 func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gin.Context) {
-	classID,err := uuid.Parse(ctx.Param("classID"))
+	classID,err := uuid.Parse(ctx.Query("classID"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -55,7 +55,7 @@ func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gi
 }
 
 func (assesmentController *assesmentController) TeacherGetAssessmentByID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -91,7 +91,7 @@ func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Contex
 }
 
 func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -117,7 +117,7 @@ func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Contex
 }
 
 func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -137,13 +137,13 @@ func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Contex
 
 // ==========================================Student==================================================
 func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	userID,err := uuid.Parse(ctx.Param("userID"))
+	userID,err := uuid.Parse(ctx.Query("userID"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -158,14 +158,15 @@ func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *
 	res := utils.SuccessResponse(assesment)
 	ctx.JSON(http.StatusOK, res)
 }
+
 func (assesmentController *assesmentController) StudentGetAllAssesmentByClassIDAssesmentFlag(ctx *gin.Context) {
-	classID,err := uuid.Parse(ctx.Param("classID"))
+	classID,err := uuid.Parse(ctx.Query("classID"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	userID,err := uuid.Parse(ctx.Param("userID"))
+	userID,err := uuid.Parse(ctx.Query("userID"))
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)

@@ -41,7 +41,7 @@ func (assesmentRepo *assesmentRepository) CreateAssessment(ctx context.Context, 
 func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context, tx *gorm.DB,id uuid.UUID) (*entities.Assessment, error) {
 	var assesment entities.Assessment
 	if err := assesmentRepo.Db.Where("id = ?", id).Preload("Questions").First(&assesment).Error; err != nil {
-		return nil, err
+		return &entities.Assessment{}, err
 	}
 	return &assesment, nil
 }
@@ -50,9 +50,8 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByID(ctx context.Context,
 func (assesmentRepo *assesmentRepository) GetAllAssesmentByClassID(ctx context.Context, tx *gorm.DB,classID uuid.UUID) ([]entities.Assessment, error) {
 	var assessments []entities.Assessment
 	if err := assesmentRepo.Db.Where("class_id = ?", classID).Find(&assessments).Error; err != nil {
-		return nil, err
+		return []entities.Assessment{}, err
 	}
-
 	return assessments, nil
 }
 
@@ -74,7 +73,7 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 	var datas []dto.StudentGetAllAssesmentByClassIDResponse
 	var assessments []entities.Assessment
 	if err := assesmentRepo.Db.Where("class_id = ?", classID).Find(&assessments).Error; err != nil {
-		return nil, err
+		return[]dto.StudentGetAllAssesmentByClassIDResponse{}, err
 	}
 	for i := range assessments {
 		var data dto.StudentGetAllAssesmentByClassIDResponse
@@ -109,13 +108,13 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx context.Context, tx *gorm.DB, id uuid.UUID, userID uuid.UUID) (*dto.GetAssessmentByIDAndByUserIDResponse, error) {
 	var assessment entities.Assessment
 	if err := assesmentRepo.Db.Where("id = ?", id).First(&assessment).Error; err != nil {
-		return nil, err
+		return &dto.GetAssessmentByIDAndByUserIDResponse{}, err
 	}
 	var submission entities.Submission
 	submission.Status = entities.StatusTodo
 	if err := assesmentRepo.Db.Where("assessment_id = ? AND user_id = ?", id, userID).First(&submission).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
-			return nil, err
+			return &dto.GetAssessmentByIDAndByUserIDResponse{}, err
 		}
 	}
 	if submission.ID != uuid.Nil {
@@ -137,45 +136,3 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 	}
 	return response, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// func (assesmentRepo *assesmentRepository) GetAllAssessments() ([]entities.Assessment, error) {
-// 	var assessments []entities.Assessment
-// 	if err := assesmentRepo.Db.Find(&assessments).Error; err != nil {
-// 		return nil, err
-// 	}
-
-// 	return assessments, nil
-// }

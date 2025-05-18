@@ -102,7 +102,7 @@ func (questionService *questionService) GetAllQuestions(ctx context.Context) (dt
 func (questionService *questionService) GetQuestionByID(ctx context.Context, id uuid.UUID) (*entities.Question, error) {
 	question, err := questionService.questionRepo.GetQuestionByID(ctx, nil, id)
 	if err != nil {
-		return nil, err
+		return &entities.Question{}, err
 	}
 	return question, nil
 }
@@ -111,7 +111,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	questionEntity, err := questionService.questionRepo.GetQuestionByID(ctx, nil, question.Id)
 	// fmt.Println(questionEntity
 	if err != nil {
-		return nil, err
+		return &entities.Question{}, err
 	}
 	// fmt.Println("aftercheck entity" )
 	data := entities.Question{
@@ -122,7 +122,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	// fmt.Println(question)
 	_, err = questionService.questionRepo.UpdateQuestion(ctx, nil, &data)
 	if err != nil {
-		return nil, err
+		return &entities.Question{}, err
 	}
 
 	err = questionService.choiceRepo.DeleteChoiceByQuestionID(ctx, nil, question.Id)
@@ -144,7 +144,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	}
 	afterQuestion, err := questionService.questionRepo.GetQuestionByID(ctx, nil, questionEntity.ID)
 	if err != nil {
-		return nil, err
+		return &entities.Question{}, err
 	}
 	return afterQuestion, nil
 }
@@ -165,10 +165,10 @@ func (questionService *questionService) DeleteQuestion(ctx context.Context, id u
 func (questionService *questionService) GetQuestionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Question, error) {
 	questions, err := questionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, assessmentID)
 	if err != nil {
-		return nil, err
+		return []entities.Question{}, err
 	}
 	if len(questions) == 0 {
-		return nil, errors.New("no questions found for this assessment")
+		return []entities.Question{}, errors.New("no questions found for this assessment")
 	}
 	return questions, nil
 }

@@ -81,7 +81,7 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 
 func (answerService *answerService) GetAllAnswers(ctx context.Context) ([]entities.Answer, error) {
 	if answers, err := answerService.answerRepo.GetAllAnswers(); err != nil {
-		return nil, utils.ErrGetAllAnswers
+		return []entities.Answer{}, utils.ErrGetAllAnswers
 	} else {
 		return answers, nil
 	}
@@ -90,7 +90,7 @@ func (answerService *answerService) GetAllAnswers(ctx context.Context) ([]entiti
 func (answerService *answerService) GetAnswerByID(ctx context.Context, id uuid.UUID) (*entities.Answer, error) {
 	answer, err := answerService.answerRepo.GetAnswerByID(ctx, nil, id)
 	if err != nil {
-		return nil, err
+		return &entities.Answer{}, err
 	}
 	return answer, nil	
 }
@@ -101,7 +101,7 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 		return nil, utils.ErrGetAnswerByID
 	}
 	if answ == nil {
-		return nil, utils.ErrGetAnswerByID
+		return &entities.Answer{}, utils.ErrGetAnswerByID
 	}
 	data := entities.Answer{
 		ID: answ.ID,
@@ -109,10 +109,9 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 		SubmissionID: answ.SubmissionID,
 		ChoiceID: answer.IdChoice,
 	}
-
 	updatedAnswer, err := answerService.answerRepo.UpdateAnswer(ctx, nil, &data)
 	if err != nil {
-		return nil, utils.ErrUpdateAnswer
+		return &entities.Answer{}, utils.ErrUpdateAnswer
 	}
 	return updatedAnswer, nil
 }
@@ -120,7 +119,7 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error) {
 	answers, err := answerService.answerRepo.GetAnswerByQuestionID(ctx, nil, questionID)
 	if err != nil {
-		return nil, utils.ErrGetAnswerByQuestionID
+		return []entities.Answer{}, utils.ErrGetAnswerByQuestionID
 	}
 	return answers, nil
 }
@@ -128,7 +127,7 @@ func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, q
 func (answerService *answerService) GetAnswerBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error) {
 	answer, err := answerService.answerRepo.GetAnswerBySubmissionID(ctx, nil, submissionID)
 	if err != nil {
-		return nil, utils.ErrGetAnswerBySubmissionID
+		return []dto.GetAnswerBySubmissionIDResponse{}, utils.ErrGetAnswerBySubmissionID
 	}
 	return answer, nil
 }

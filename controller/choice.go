@@ -47,7 +47,7 @@ func (choiceController *choiceController) CreateChoice(ctx *gin.Context) {
 }
 
 func (choiceController *choiceController) GetChoiceByID(ctx *gin.Context) {
-	id ,err:= uuid.Parse(ctx.Param("id"))
+	id ,err:= uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse("invalid id format")
 		ctx.JSON(http.StatusBadRequest, res)

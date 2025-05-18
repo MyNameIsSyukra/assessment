@@ -78,7 +78,7 @@ func (choiceService *choiceService) GetChoiceByID(ctx context.Context, id uuid.U
 func (choiceService *choiceService) GetChoiceByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Choice, error) {
 	choices, err := choiceService.choiceRepo.GetChoiceByQuestionID(ctx, nil, questionID)
 	if err != nil {
-		return nil, err
+		return []entities.Choice{}, err
 	}
 	return choices, nil
 }

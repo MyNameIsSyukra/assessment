@@ -44,7 +44,7 @@ func (questionRepo *questionRepository) CreateQuestion(ctx context.Context, tx *
 
 func (choiceRepo *questionRepository) CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error) {
 	if err := choiceRepo.Db.Create(choice).Error; err != nil {
-		return nil, err
+		return &entities.Choice{}, err
 	}
 	return choice, nil
 }
@@ -52,7 +52,7 @@ func (choiceRepo *questionRepository) CreateChoice(ctx context.Context, tx *gorm
 func (questionRepo *questionRepository) GetQuestionByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Question, error) {
 	var question entities.Question
 	if err := questionRepo.Db.Where("id = ?", id).Preload("Choices").First(&question).Error; err != nil {
-		return nil, err
+		return &entities.Question{}, err
 	}
 	return &question, nil
 }
@@ -69,7 +69,7 @@ func (questionRepo *questionRepository) GetAllQuestions() (dto.GetAllQuestionsRe
 
 func (questionRepo *questionRepository) UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error) {
 	if err := questionRepo.Db.Where("id = ?", question.ID).Updates(question).Error; err != nil {
-		return nil, err
+		return &entities.Question{}, err
 	}
 	// fmt.Println("questionRepo", question)
 	return question, nil
@@ -86,7 +86,7 @@ func (questionRepo *questionRepository) DeleteQuestion(ctx context.Context, tx *
 func (questionRepo *questionRepository) GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Question, error) {
 	var questions []entities.Question
 	if err := questionRepo.Db.Where("evaluation_id = ?", assessmentID).Preload("Choices").Find(&questions).Error; err != nil {
-		return nil, err
+		return []entities.Question{}, err
 	}
 	return questions, nil
 }

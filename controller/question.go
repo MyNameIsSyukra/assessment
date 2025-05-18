@@ -85,7 +85,7 @@ func (questionController *questionController) GetAllQuestions(ctx *gin.Context) 
 }
 
 func (questionController *questionController) GetQuestionByID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse("invalid id format")
 		ctx.JSON(http.StatusBadRequest, res)
@@ -120,7 +120,7 @@ func (questionController *questionController) UpdateQuestion(ctx *gin.Context) {
 }
 
 func (questionController *questionController) DeleteQuestion(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse("invalid id format")
 		ctx.JSON(http.StatusBadRequest, res)
@@ -137,7 +137,7 @@ func (questionController *questionController) DeleteQuestion(ctx *gin.Context) {
 }
 
 func (questionController *questionController) GetQuestionsByAssessmentID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse("invalid id format")
 		ctx.JSON(http.StatusBadRequest, res)

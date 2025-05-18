@@ -48,7 +48,7 @@ func (answerRepo *answerRepository) CreateAnswer(ctx context.Context, tx *gorm.D
 func (answerRepo *answerRepository) GetAnswerByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Answer, error) {
 	var answer entities.Answer
 	if err := answerRepo.Db.Where("id = ?", id).First(&answer).Error; err != nil {
-		return nil, err
+		return &entities.Answer{}, err
 	}
 	return &answer, nil
 }
@@ -56,7 +56,7 @@ func (answerRepo *answerRepository) GetAnswerByID(ctx context.Context, tx *gorm.
 func (answerRepo *answerRepository) GetAllAnswers() ([]entities.Answer, error) {
 	var answers []entities.Answer
 	if err := answerRepo.Db.Find(&answers).Error; err != nil {
-		return nil, err
+		return []entities.Answer{}, err
 	}
 	return answers, nil
 }
@@ -66,7 +66,7 @@ func (answerRepo *answerRepository) UpdateAnswer(ctx context.Context, tx *gorm.D
 	// 	return nil, err
 	// }
 	if err := answerRepo.Db.Where("id = ?",answer.ID).Updates(answer).Error; err != nil {
-		return nil, err
+		return &entities.Answer{}, err
 	}
 	return answer, nil
 }
@@ -74,24 +74,16 @@ func (answerRepo *answerRepository) UpdateAnswer(ctx context.Context, tx *gorm.D
 func (answerRepo *answerRepository) GetAnswerByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Answer, error) {
 	var answers []entities.Answer
 	if err := answerRepo.Db.Where("question_id = ?", questionID).Find(&answers).Error; err != nil {
-		return nil, err
+		return []entities.Answer{}, err
 	}
 	return answers, nil
 }
-
-// func (answerRepo *answerRepository) GetAnswerByStudentID(ctx context.Context, tx *gorm.DB, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
-// 	var answers []entities.Answer
-// 	if err := answerRepo.Db.Where("student_id = ?", id.IdStudent).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
-// 		return nil, err
-// 	}
-// 	return answers, nil
-// }
 
 func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context, tx *gorm.DB, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error) {
 	var answers []entities.Answer
 	var dtoAnswers []dto.GetAnswerBySubmissionIDResponse
 	if err := answerRepo.Db.Where("submission_id = ?", submissionID).Preload("Question").Preload("Choice").Find(&answers).Error; err != nil {
-		return nil, err
+		return []dto.GetAnswerBySubmissionIDResponse{}, err
 	}
 	for _, answer := range answers {
 		choice := dto.ChoiceGetAnswerBySubmissionIDResponse{
@@ -120,7 +112,7 @@ func (answerRepo *answerRepository) GetAnswerBySubmissionID(ctx context.Context,
 func (answerRepo *answerRepository) GetAnswerBySubmissionIDAndQuestionID(ctx context.Context, tx *gorm.DB, SubmisiionID uuid.UUID, IdQuestion uuid.UUID) (*entities.Answer, error) {
 	var answers entities.Answer
 	if err := answerRepo.Db.Where("submission_id = ? AND question_id = ?", SubmisiionID, IdQuestion).Find(&answers).Error; err != nil {
-		return nil, err
+		return &entities.Answer{}, err
 	}
 	return &answers, nil
 }

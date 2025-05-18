@@ -29,7 +29,7 @@ func NewChoiceRepository(db *gorm.DB) ChoiceRepository {
 
 func (choiceRepo *choiceRepository) CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error) {
 	if err := choiceRepo.Db.Create(choice).Error; err != nil {
-		return nil, err
+		return &entities.Choice{}, err
 	}
 	return choice, nil
 }
@@ -51,7 +51,7 @@ func (choiceRepo *choiceRepository) GetChoiceByID(ctx context.Context, tx *gorm.
 
 func (choiceRepo *choiceRepository) UpdateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error) {
 	if err := choiceRepo.Db.Where("id = ?", choice.ID).Updates(choice).Error; err != nil {
-		return nil, err
+		return &entities.Choice{}, err
 	}
 	return choice, nil
 }
@@ -59,7 +59,7 @@ func (choiceRepo *choiceRepository) UpdateChoice(ctx context.Context, tx *gorm.D
 func (choiceRepo *choiceRepository) GetChoiceByQuestionID(ctx context.Context, tx *gorm.DB, questionID uuid.UUID) ([]entities.Choice, error) {
 	var choices []entities.Choice
 	if err := choiceRepo.Db.Where("question_id = ?", questionID).Find(&choices).Error; err != nil {
-		return nil, err
+		return []entities.Choice{}, err
 	}
 	return choices, nil
 }

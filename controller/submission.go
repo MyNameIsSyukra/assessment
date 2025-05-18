@@ -65,7 +65,7 @@ func (submissionController *submissionController) GetAllSubmissions(ctx *gin.Con
 }
 
 func (submissionController *submissionController) GetSubmissionByID(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		res := utils.FailedResponse("invalid id format")
 		ctx.JSON(http.StatusBadRequest, res)
@@ -83,21 +83,24 @@ func (submissionController *submissionController) GetSubmissionByID(ctx *gin.Con
 
 
 func (submissionController *submissionController) DeleteSubmission(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse("invalid id format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	err = submissionController.submissionService.DeleteSubmission(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusNoContent, nil)
+	res := utils.SuccessResponse("submission deleted successfully")
+	ctx.JSON(http.StatusNoContent, res)
 }
 
 func (submissionController *submissionController) GetSubmissionsByUserID(ctx *gin.Context) {
-	userID,err := uuid.Parse(ctx.Param("user_id"))
+	userID,err := uuid.Parse(ctx.Query("user_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
@@ -111,12 +114,12 @@ func (submissionController *submissionController) GetSubmissionsByUserID(ctx *gi
 }
 
 func (submissionController *submissionController) GetSubmissionsByAssessmentIDAndUserID(ctx *gin.Context) {
-	assessmentID,err := uuid.Parse(ctx.Param("assessment_id"))
+	assessmentID,err := uuid.Parse(ctx.Query("assessment_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
-	userID,err := uuid.Parse(ctx.Param("user_id"))
+	userID,err := uuid.Parse(ctx.Query("user_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
@@ -130,7 +133,7 @@ func (submissionController *submissionController) GetSubmissionsByAssessmentIDAn
 }
 
 func (submissionController *submissionController) Submitted(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Param("id"))
+	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
@@ -144,7 +147,7 @@ func (submissionController *submissionController) Submitted(ctx *gin.Context) {
 }
 
 func (submissionController *submissionController)GetStudentSubmissionsByAssessmentID(ctx *gin.Context)(){
-	id,err := uuid.Parse(ctx.Param("submissionID"))
+	id,err := uuid.Parse(ctx.Query("submissionID"))
 	flag := ctx.Query("status")
 	fmt.Println(flag)
 	if err != nil {

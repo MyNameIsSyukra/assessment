@@ -81,7 +81,7 @@ func (submissionService *submissionService) CreateSubmission(ctx context.Context
 
 func (submissionService *submissionService) GetAllSubmissions(ctx context.Context) ([]entities.Submission, error) {
 	if submissions, err := submissionService.submissionRepo.GetAllSubmissions(); err != nil {
-		return nil, err
+		return []entities.Submission{}, err
 	} else {
 		return submissions, nil
 	}
@@ -90,7 +90,7 @@ func (submissionService *submissionService) GetAllSubmissions(ctx context.Contex
 func (submissionService *submissionService) GetSubmissionByID(ctx context.Context, id uuid.UUID) (*entities.Submission, error) {
 	submission, err := submissionService.submissionRepo.GetSubmissionByID(ctx, nil, id)
 	if err != nil {
-		return nil, err
+		return &entities.Submission{}, err
 	}
 	return submission, nil
 }
@@ -105,7 +105,7 @@ func (submissionService *submissionService) DeleteSubmission(ctx context.Context
 func (submissionService *submissionService) GetSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Submission, error) {
 	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
 	if err != nil {
-		return nil, err
+		return []entities.Submission{}, err
 	}
 	return submissions, nil
 }
@@ -113,7 +113,7 @@ func (submissionService *submissionService) GetSubmissionsByAssessmentID(ctx con
 func (submissionService *submissionService) GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error) {
 	submissions, err := submissionService.submissionRepo.GetSubmissionsByUserID(ctx, nil, userID)
 	if err != nil {
-		return nil, err
+		return []entities.Submission{}, err
 	}
 	return submissions, nil
 }
@@ -121,7 +121,7 @@ func (submissionService *submissionService) GetSubmissionsByUserID(ctx context.C
 func (submissionService *submissionService) GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error) {
 	submission,_, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, assessmentID, userID)
 	if err != nil {
-		return nil, err
+		return &entities.Submission{}, err
 	}
 	return submission, nil
 }
@@ -129,7 +129,7 @@ func (submissionService *submissionService) GetSubmissionsByAssessmentIDAndUserI
 func (submissionService *submissionService) Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error) {
 	submission, err := submissionService.submissionRepo.GetSubmissionByID(ctx, nil, submissionID)
 	if err != nil {
-		return nil, err
+		return &entities.Submission{}, err
 	}
 	data := entities.Submission{
 		ID: submission.ID,
@@ -139,7 +139,7 @@ func (submissionService *submissionService) Submitted(ctx context.Context, submi
 	}
 	result, err := submissionService.submissionRepo.Submitted(ctx, nil, &data)
 	if err != nil {
-		return nil, err
+		return &entities.Submission{}, err
 	}
 
 	return result, nil
@@ -148,20 +148,19 @@ func (submissionService *submissionService) Submitted(ctx context.Context, submi
 func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID,flag string) ([]dto.GetSubmissionStudentResponse, error) {
 	class, err := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
 	if err != nil {
-		return nil, err
+		return []dto.GetSubmissionStudentResponse{}, err
 	}
 	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
 	if err != nil {
-		return nil, err
+		return []dto.GetSubmissionStudentResponse{}, err
 	}
 	classID := class.ClassID
 	url := fmt.Sprintf("http://localhost:8081/service/class/%s", classID)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch data: %w", err)
+		return []dto.GetSubmissionStudentResponse{}, err
 	}
 	defer resp.Body.Close()
-	
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
