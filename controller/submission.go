@@ -147,7 +147,7 @@ func (submissionController *submissionController) Submitted(ctx *gin.Context) {
 }
 
 func (submissionController *submissionController)GetStudentSubmissionsByAssessmentID(ctx *gin.Context)(){
-	id,err := uuid.Parse(ctx.Query("submissionID"))
+	id,err := uuid.Parse(ctx.Query("assessment_id"))
 	flag := ctx.Query("status")
 	fmt.Println(flag)
 	if err != nil {
