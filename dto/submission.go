@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type SubmissionCreateRequest struct {
@@ -17,21 +16,20 @@ type SubmissionCreateResponse struct {
 	ID           uuid.UUID      `gorm:"type:uuid" json:"id"`
 	UserID       uuid.UUID      `gorm:"type:uuid" json:"user_id"`
 	AssessmentID uuid.UUID      `gorm:"type:uuid" json:"assessment_id"`
+	EndedTime	time.Time      `json:"ended_time"`
 	Question []entities.Question `json:"question"`
 }
 
 
 type GetSubmissionStudentResponse struct {
-	ID        uuid.UUID `gorm:"type:uuid" json:"id,omitempty"`
+	ID        *uuid.UUID `gorm:"type:uuid" json:"id,omitempty"`
 	Username  string    `json:"username"`
-	Role  Role `json:"role"`
+	Role  Role `json:"-"`
 	User_userID uuid.UUID `gorm:"type:uuid" json:"user_user_id"`
 	Kelas_kelasID uuid.UUID `gorm:"type:uuid" json:"kelas_kelas_id"`
 	Status entities.ExamStatus `json:"status"`
 	Score  float64       `json:"score"`
-	CreatedAt time.Time	`json:"created_at"`
-	UpdatedAt time.Time	`json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	TimeRemaining *int64        `json:"time_remaining,omitempty"`
 }
 
 type Role string

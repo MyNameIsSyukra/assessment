@@ -19,6 +19,7 @@ import (
 type Assessment struct {
     ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
     Name      string    `json:"name"`
+    Description string `json:"description"`
     StartTime time.Time `json:"start_time"`
     EndTime   time.Time `json:"end_time"`
     Duration int       `json:"duration"` // in Second

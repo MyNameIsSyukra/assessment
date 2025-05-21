@@ -77,7 +77,7 @@ type GetAssesmentByIDResponseTeacher struct{
     Duration int       `json:"duration"` // in Second
 	TotalSubmission int `json:"total_submission"`
 	TotalStudent int `json:"total_student"`
-	Questions []entities.Question `json:"questions"`
+	// Questions []entities.Question `json:"questions"`
 }
 
 type GetMemberResponse struct {

@@ -54,6 +54,7 @@ func (assesmentController *assesmentController) GetAllAssesmentByClassID(ctx *gi
 	ctx.JSON(http.StatusOK, res)
 }
 
+// ===========================================Teacher==================================================
 func (assesmentController *assesmentController) TeacherGetAssessmentByID(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
@@ -71,7 +72,6 @@ func (assesmentController *assesmentController) TeacherGetAssessmentByID(ctx *gi
 	ctx.JSON(http.StatusOK, res)
 }
 
-// ===========================================Teacher==================================================
 func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Context) {
 	var request dto.AssessmentCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {

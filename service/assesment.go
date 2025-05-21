@@ -138,7 +138,7 @@ func (assesmentService *assesmentService) TeacherGetAssessmentByID(ctx context.C
 		EndTime: assesment.EndTime,
 		TotalSubmission: totalSubmission,
 		TotalStudent: totalStudent,
-		Questions: assesment.Questions,
+		// Questions: assesment.Questions,
 	}, nil
 }
 

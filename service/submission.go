@@ -17,7 +17,9 @@ import (
 
 type (
 	SubmissionService interface {
+		// student
 		CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error)
+		Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error)
 		GetAllSubmissions(ctx context.Context) ([]entities.Submission, error)
 		GetSubmissionByID(ctx context.Context, id uuid.UUID) (*entities.Submission, error)
 		// UpdateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (*entities.Submission, error)
@@ -25,8 +27,7 @@ type (
 		GetSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error)
-		Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error)
-		GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string) ([]dto.GetSubmissionStudentResponse, error)
+		GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string)  ([]dto.GetSubmissionStudentResponse, error)
 	}
 	submissionService struct {
 		submissionRepo repository.SubmissionRepository
@@ -75,6 +76,7 @@ func (submissionService *submissionService) CreateSubmission(ctx context.Context
 		ID:             createdSubmission.ID,
 		UserID:         createdSubmission.UserID,
 		AssessmentID:   createdSubmission.AssessmentID,
+		EndedTime:      createdSubmission.EndedTime,
 		Question: question,
 	}, nil
 }
@@ -146,7 +148,8 @@ func (submissionService *submissionService) Submitted(ctx context.Context, submi
 }
 
 func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID,flag string) ([]dto.GetSubmissionStudentResponse, error) {
-	class, err := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
+// func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID,flag string) (, error) {
+	assesment, err := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
 	if err != nil {
 		return []dto.GetSubmissionStudentResponse{}, err
 	}
@@ -154,7 +157,7 @@ func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(
 	if err != nil {
 		return []dto.GetSubmissionStudentResponse{}, err
 	}
-	classID := class.ClassID
+	classID := assesment.ClassID
 	url := fmt.Sprintf("http://localhost:8081/service/class/%s", classID)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -163,11 +166,11 @@ func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return []dto.GetSubmissionStudentResponse{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 	var members []dto.GetSubmissionStudentResponse
 	if err := json.Unmarshal(body, &members); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return []dto.GetSubmissionStudentResponse{}, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 	
 	submissionMap := make(map[uuid.UUID]entities.Submission)
@@ -177,41 +180,64 @@ func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(
 	}
 	
 	status := entities.ExamStatus("todo")
-	var result []dto.GetSubmissionStudentResponse
+	var studentSubmission []dto.GetSubmissionStudentResponse
 	for _, m := range members {
+		var datas dto.GetSubmissionStudentResponse
 		if m.Role == dto.RoleTeacher{
 			continue
 		}
 		sub := submissionMap[m.User_userID]
+		now := time.Now()
+		duration := int64(sub.EndedTime.Sub(now).Seconds())
+		if duration < 0 {
+			duration = 0
+		}
 		if sub.Status == "" {
-			sub.Status = status
-			m.ID = uuid.Nil
+			datas.ID = nil
+			datas.Username = m.Username
+			datas.User_userID = m.User_userID
+			datas.Kelas_kelasID = m.Kelas_kelasID
+			datas.Role = m.Role
+			datas.Status = status	
+			datas.TimeRemaining = nil
+			datas.Score = 0
+		}else if sub.Status == "in_progress" {
+			datas.ID = &sub.ID
+			datas.Username = m.Username
+			datas.User_userID = m.User_userID
+			datas.Kelas_kelasID = m.Kelas_kelasID
+			datas.Role = m.Role
+			datas.Status = sub.Status
+			datas.TimeRemaining = &duration
+			datas.Score = sub.Score
+		}else if sub.Status == "submitted" {
+			datas.ID = &sub.ID
+			datas.Username = m.Username
+			datas.User_userID = m.User_userID
+			datas.Kelas_kelasID = m.Kelas_kelasID
+			datas.Role = m.Role
+			datas.Status = sub.Status
+			datas.TimeRemaining = nil
+			datas.Score = sub.Score
+			}
+		if sub.Status == entities.ExamStatus(flag){
+		studentSubmission = append(studentSubmission, datas)
+		}else if flag == "" {
+			studentSubmission = append(studentSubmission, datas)
 		}
-		dto := dto.GetSubmissionStudentResponse{
-			ID:           m.ID,
-			Username:     m.Username,
-			User_userID:   m.User_userID,
-			Kelas_kelasID: m.Kelas_kelasID,
-			Role:         m.Role,
-			Status:       sub.Status,
-			Score:        sub.Score,
-			CreatedAt:    m.CreatedAt,
-			UpdatedAt:    m.UpdatedAt,
-			DeletedAt:    m.DeletedAt,
-		}
-		result = append(result, dto)
 	}
-	var res []dto.GetSubmissionStudentResponse
-	if flag == "" {
-		return result, nil
-	}
-	
-	for _, m := range result {
-		if m.Status == entities.ExamStatus(flag){
-			res = append(res, m)
-		}
-	}
-	return res, nil
+	return studentSubmission, nil
 }
+
+	// var res []dto.GetSubmissionStudentResponse
+	// if flag == "" {
+	// 	return result, nil
+	// }
+	
+	// for _, m := range result {
+	// 	if m.Status == entities.ExamStatus(flag){
+	// 		res = append(res, m)
+	// 	}
+	// }
 
 
