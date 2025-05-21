@@ -9,16 +9,18 @@ import (
 
 type AssessmentCreateRequest struct {
 	Name string `json:"name" binding:"required"`
-	ClassId uuid.UUID `json:"class_id" binding:"required"`
-	Duration int `json:"duration" binding:"required"`
-	Date_created time.Time `json:"date_created" binding:"required"`
+	Description string `json:"description" binding:"required"`
 	Start_time time.Time `json:"start_time" binding:"required"`
 	End_time time.Time	`json:"end_time" binding:"required"`
+	Duration int `json:"duration" binding:"required"`
+	ClassId uuid.UUID `json:"class_id" binding:"required"`
+	Date_created time.Time `json:"date_created" binding:"required"`
 }
 
 type AssessmentCreateResponse struct {
 	ID uuid.UUID `json:"id"`
 	Name string `json:"name"`
+	Description string `json:"description"`
 	ClassId uuid.UUID `json:"class_id"`
 	Duration int `json:"duration"`
 	Date_created time.Time `json:"date_created"`
@@ -34,6 +36,7 @@ type GetAllAssessmentsResponse struct {
 type AssessmentUpdateRequest struct {
 	IdEvaluation uuid.UUID `json:"id" binding:"required"`
 	Name string `json:"name"`
+	Description string `json:"description"`
 	ClassId uuid.UUID `json:"class_id"`
 	Duration int `json:"duration"`
 	Date_created time.Time `json:"date_created"`

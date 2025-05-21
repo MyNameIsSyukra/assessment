@@ -65,6 +65,7 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 	assesmentEntity := entities.Assessment{
 		ClassID: assesment.ClassId,
 		Name: assesment.Name,
+		Description: assesment.Description,
 		Duration: assesment.Duration,
 		CreatedAt: assesment.Date_created,
 		StartTime: assesment.Start_time,
@@ -78,6 +79,7 @@ func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, 
 	res := dto.AssessmentCreateResponse{
 		ID: createdAssessment.ID,
 		Name: createdAssessment.Name,
+		Description: createdAssessment.Description,
 		ClassId: createdAssessment.ClassID,
 		Start_time: createdAssessment.StartTime,
 		Duration: createdAssessment.Duration,
@@ -142,7 +144,7 @@ func (assesmentService *assesmentService) TeacherGetAssessmentByID(ctx context.C
 	}, nil
 }
 
-func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
+func (assesmentService *assesmentService) UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
 	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.IdEvaluation)
 	if ass == nil {
 		return &entities.Assessment{}, errors.New("no assessment found")
@@ -153,6 +155,7 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 	assesmentEntity := entities.Assessment{
 		ID: ass.ID,
 		ClassID: ass.ClassID,
+		Description: assesment.Description,
 		Name: assesment.Name,
 		Duration: assesment.Duration,
 		CreatedAt: assesment.Date_created,
@@ -167,7 +170,7 @@ func (assesmentService *assesmentService) UpdateAssessment (ctx context.Context,
 	return updatedAssessment, nil
 }
 
-func (assesmentService *assesmentService) DeleteAssessment (ctx context.Context, id uuid.UUID) error {
+func (assesmentService *assesmentService) DeleteAssessment(ctx context.Context, id uuid.UUID) error {
 	asses,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, id)
 	if err != nil {
 		return err
@@ -202,10 +205,10 @@ func (assesmentService *assesmentService) StudentGetAllAssesmentByClassIDAndUser
 func (assesmentService *assesmentService) GetAssessmentByIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)(dto.GetAssessmentByIDAndByUserIDResponse, error){
 	assessments, err := assesmentService.assesmentRepo.GetAssessmentByIDAndByUserID(ctx, nil, classID,userID)
 	if assessments == nil {
-		return dto.GetAssessmentByIDAndByUserIDResponse{}, utils.ErrGetAllAssesmentByClassID
+		return dto.GetAssessmentByIDAndByUserIDResponse{}, utils.ErrGetAssesmentByID
 	}
 	if err != nil {
-		return dto.GetAssessmentByIDAndByUserIDResponse{}, utils.ErrGetAllAssesmentByClassID
+		return dto.GetAssessmentByIDAndByUserIDResponse{}, utils.ErrGetAssesmentByID
 	}
 
 	return dto.GetAssessmentByIDAndByUserIDResponse{
