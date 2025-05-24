@@ -65,6 +65,12 @@ func main() {
 		return
 	}
 
+	// run migrations
+	err := migration.Migrate(db)
+	if err != nil {
+		log.Fatalf("error running migrations: %v", err)
+	}
+	log.Println("Migrations completed successfully")
     server := gin.Default()
 	server.Use(middleware.CORSMiddleware())
     
