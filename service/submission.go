@@ -10,9 +10,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 )
 
 type (
@@ -45,13 +48,31 @@ func NewSubmissionService(submissionRepo repository.SubmissionRepository, questi
 }
 
 func (submissionService *submissionService) CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error) {
-	var question []entities.Question
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
 	assesment, errr := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
 	if errr != nil {
 		return dto.SubmissionCreateResponse{}, errr
 	}
-	_,flag, _ := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
+
+	// check if user is a member of the class
+	params := url.Values{}
+	params.Add("classID", assesment.ClassID.String())
+	params.Add("userID", submission.UserID.String())
+	url := fmt.Sprintf("%s/service/class/member/?%s", os.Getenv("CLASS_SERVICE_URL"), params.Encode())
+	resp, err := http.Get(url)
+	if err != nil {
+		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to get class member: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return dto.SubmissionCreateResponse{}, fmt.Errorf("you are not a member of this class")
+	}
+	defer resp.Body.Close()
+
 	// check if the submission already exists
+	_,flag, _ := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
 	if flag {
 		return dto.SubmissionCreateResponse{}, errors.New("submission already exists")
 	}
@@ -61,8 +82,9 @@ func (submissionService *submissionService) CreateSubmission(ctx context.Context
 		Status: "in_progress",
 		EndedTime: time.Now().Add(time.Duration(assesment.Duration) * time.Second),
 	}
-
-	question, err := submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
+	
+	var question []entities.Question
+	question, err = submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
 	if err != nil {
 		question = nil
 	}

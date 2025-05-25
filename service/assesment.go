@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/google/uuid"
@@ -62,6 +63,25 @@ func (assesmentService *assesmentService) GetAllAssesmentByClassID(ctx context.C
 
 // teacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacher
 func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error) {
+	// checl if class is exist
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+	params := url.Values{}
+	params.Add("id", assesment.ClassId.String())
+	urlClassSerivice := os.Getenv("CLASS_SERVICE_URL")
+	url := fmt.Sprintf("%s/kelas/?%s",urlClassSerivice,params.Encode())
+	resp, err := http.Get(url)
+	if err != nil {
+		return dto.AssessmentCreateResponse{}, fmt.Errorf("error checking class existence: %v", err)
+	}
+	if resp.StatusCode != 200 {
+		return dto.AssessmentCreateResponse{}, fmt.Errorf("no class found with id %s", assesment.ClassId.String())
+	}
+	defer resp.Body.Close()
+	// Baca body response
+	
 	assesmentEntity := entities.Assessment{
 		ClassID: assesment.ClassId,
 		Name: assesment.Name,
