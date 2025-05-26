@@ -115,7 +115,8 @@ func (answerController *answerController) GetAnswerByQuestionID(ctx *gin.Context
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, answers)
+	res := utils.SuccessResponse(answers)
+	ctx.JSON(http.StatusOK,res)
 }
 
 func (answerController *answerController) GetAnswerBySubmissionID(ctx *gin.Context) {
@@ -132,7 +133,8 @@ func (answerController *answerController) GetAnswerBySubmissionID(ctx *gin.Conte
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, answers)
+	res := utils.SuccessResponse(answers)
+	ctx.JSON(http.StatusOK, res)
 }
 
 
