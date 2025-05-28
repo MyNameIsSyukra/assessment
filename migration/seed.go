@@ -16,7 +16,7 @@ func Seeder()error{
 
 	for i := 1; i <= 5; i++ {
 		assessmentID := uuid.MustParse(fmt.Sprintf("00000000-0000-0000-0000-00000000000%d", i))
-		classID := uuid.MustParse("10000000-0000-0000-0000-000000000001")
+		classID := uuid.MustParse(fmt.Sprintf("%d%d%d%d%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d%d%d%d%d%d%d%d%d",i, i, i, i, i, i, i, i,i, i, i, i,i, i, i, i,i, i, i, i,i, i, i, i, i, i, i, i, i, i, i, i))
 		now := time.Now()
 		assessment := entities.Assessment{
 			ID:        assessmentID,
@@ -57,7 +57,7 @@ func Seeder()error{
 
 		// Seed Submissions
 		submissionID := uuid.MustParse(fmt.Sprintf("30000000-0000-0000-0000-00000000000%d", i))
-		userID := uuid.MustParse(fmt.Sprintf("40000000-0000-0000-0000-00000000000%d", i))
+		userID := uuid.MustParse(fmt.Sprintf("%d%d%d%d%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d%d%d%d%d%d%d%d%d",i, i, i, i, i, i, i, i+1,i+1, i+1, i+1, i+2,i+2, i+2, i+2, i+3,i+3, i+3, i+3, i+4,i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4))
 		submission := entities.Submission{
 			ID:           submissionID,
 			UserID:       userID,
@@ -68,7 +68,7 @@ func Seeder()error{
 			Status:       entities.StatusSubmitted,
 		}
 		db.Create(&submission)
-
+		
 		// Seed Answer
 		answerID := uuid.MustParse(fmt.Sprintf("50000000-0000-0000-0000-00000000000%d", i))
 		choiceID := uuid.MustParse(fmt.Sprintf("20000000-0000-0000-0000-0000000000%d1", i)) // asumsi pilihan pertama yang benar
