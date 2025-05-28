@@ -30,6 +30,20 @@ func Seeder()error{
 		}
 		db.Create(&assessment)
 
+		// Seed Submissions
+		submissionID := uuid.MustParse(fmt.Sprintf("30000000-0000-0000-0000-00000000000%d", i))
+		userID := uuid.MustParse(fmt.Sprintf("%d%d%d%d%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d%d%d%d%d%d%d%d%d",i, i, i, i, i, i, i, i,i+1, i+1, i+1, i+1,i+2, i+2, i+2, i+2,i+3, i+3, i+3, i+3,i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4))
+		submission := entities.Submission{
+			ID:           submissionID,
+			UserID:       userID,
+			AssessmentID: assessmentID,
+			EndedTime:    now.Add(30 * time.Minute),
+			SubmittedAt:  now.Add(30 * time.Minute),
+			Score:        100,
+			Status:       entities.StatusSubmitted,
+		}
+		db.Create(&submission)
+
 		// Seed Questions
 		questionID := uuid.MustParse(fmt.Sprintf("10000000-0000-0000-0000-00000000000%d", i))
 		question := entities.Question{
@@ -54,33 +68,20 @@ func Seeder()error{
 			}
 			db.Create(&choice)
 		}
-
-		// Seed Submissions
-		submissionID := uuid.MustParse(fmt.Sprintf("30000000-0000-0000-0000-00000000000%d", i))
-		userID := uuid.MustParse(fmt.Sprintf("%d%d%d%d%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d%d%d%d%d%d%d%d%d",i, i, i, i, i, i, i, i+1,i+1, i+1, i+1, i+2,i+2, i+2, i+2, i+3,i+3, i+3, i+3, i+4,i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4, i+4))
-		submission := entities.Submission{
-			ID:           submissionID,
-			UserID:       userID,
-			AssessmentID: assessmentID,
-			EndedTime:    now.Add(30 * time.Minute),
-			SubmittedAt:  now.Add(30 * time.Minute),
-			Score:        100,
-			Status:       entities.StatusSubmitted,
-		}
-		db.Create(&submission)
 		
-		// Seed Answer
-		answerID := uuid.MustParse(fmt.Sprintf("50000000-0000-0000-0000-00000000000%d", i))
-		choiceID := uuid.MustParse(fmt.Sprintf("20000000-0000-0000-0000-0000000000%d1", i)) // asumsi pilihan pertama yang benar
-		answer := entities.Answer{
-			ID:           answerID,
-			QuestionID:   questionID,
-			ChoiceID:     choiceID,
-			SubmissionID: submissionID,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+		// Seed Answer untuk setiap submission
+		for j := 1; j <= 4; j++ {
+			answerID := uuid.MustParse(fmt.Sprintf("40000000-0000-0000-0000-0000000000%d%d", i, j))
+			answer := entities.Answer{
+				ID:            answerID,
+				SubmissionID:  submissionID,
+				QuestionID:    questionID,
+				ChoiceID:      uuid.MustParse(fmt.Sprintf("20000000-0000-0000-0000-0000000000%d%d", i, j)),
+				CreatedAt:     now,
+				UpdatedAt:     now,
+			}
+			db.Create(&answer)
 		}
-		db.Create(&answer)
 	}
 
 	fmt.Println("Seeder selesai.")
