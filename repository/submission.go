@@ -20,6 +20,7 @@ type (
 		GetSubmissionsByUserID(ctx context.Context, tx *gorm.DB, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, bool,error)
 		Submitted(ctx context.Context, tx *gorm.DB, submission *entities.Submission) (*entities.Submission, error)
+		GetExpiredSubmissions(ctx context.Context, tx *gorm.DB) ([]entities.Submission, error)
 	}
 	submissionRepository struct {
 		Db *gorm.DB
@@ -138,6 +139,15 @@ func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *g
 	}
 
 	return submission, nil
+}
+
+// GetExpiredSubmissions
+func (submissionRepo *submissionRepository) GetExpiredSubmissions(ctx context.Context, tx *gorm.DB) ([]entities.Submission, error) {
+	var submissions []entities.Submission
+	if err := submissionRepo.Db.Where("ended_time < NOW()").Find(&submissions).Error; err != nil {
+		return []entities.Submission{}, err
+	}
+	return submissions, nil
 }
 
 

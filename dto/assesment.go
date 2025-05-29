@@ -65,6 +65,10 @@ type GetAssessmentByIDAndByUserIDRequest struct {
 
 type GetAssessmentByIDAndByUserIDResponse struct {
 	Assessment entities.Assessment `json:"assessment"`
+	TimeSpent *time.Duration `json:"time_spent"`
+	TimeRemaining *time.Duration `json:"time_remaining"`
+	MaxScore int `json:"max_score"`
+	Score *int `json:"score"`
 	SubmittedAnswer int `json:"submitted_answer"`
 	Question int `json:"question"`
 	SubmissionStatus entities.ExamStatus `json:"submission_status"`

@@ -4,6 +4,9 @@ import (
 	"assesment/dto"
 	entities "assesment/entities"
 	"context"
+	"fmt"
+	"math"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -128,22 +131,54 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 		UpdatedAt:   assessment.UpdatedAt,
 		ClassID:     assessment.ClassID,
 	}
-	if submission.ID != uuid.Nil {
-		response := &dto.GetAssessmentByIDAndByUserIDResponse{
-			Assessment:      assessmentWithoutQuestions,
-			SubmittedAnswer: len(submission.Answers),
-			Question:        len(assessment.Questions),
-			SubmissionStatus: submission.Status,
-			SubmissionID:    &submission.ID,
+	var response dto.GetAssessmentByIDAndByUserIDResponse
+	if submission.ID == uuid.Nil {
+		fmt.Println("Submission todo")
+		response.Assessment = assessmentWithoutQuestions
+		response.MaxScore = 100
+		response.Question = len(assessment.Questions)
+		response.SubmittedAnswer = len(submission.Answers)
+		response.Score = nil
+		response.SubmissionID = nil
+		response.SubmissionStatus = submission.Status
+		response.TimeRemaining = nil
+		response.TimeSpent = nil
+	}else if submission.Status == entities.StatusInProgress{
+		fmt.Println("Submission in progress")
+		timeremain := submission.EndedTime.Sub(time.Now())
+		timeremain = timeremain.Round(time.Second)
+		if timeremain < 0 {
+			timeremain = 0
 		}
-		return response, nil
+		timeSpent := time.Now().Sub(submission.CreatedAt)
+		timeSpent = timeSpent.Round(time.Second)
+		response.Assessment = assessmentWithoutQuestions
+		response.MaxScore = 100
+		response.Question = len(assessment.Questions)
+		response.SubmittedAnswer = len(submission.Answers)
+		response.Score = nil
+		response.SubmissionID = &submission.ID
+		response.SubmissionStatus = submission.Status
+		response.TimeRemaining = &timeremain
+		response.TimeSpent = &timeSpent
+	} else if submission.Status == entities.StatusSubmitted {
+		score := int(math.Round(submission.Score))
+		timeremain := submission.EndedTime.Sub(submission.CreatedAt)
+		timeremain = timeremain.Round(time.Second)
+		if timeremain < 0 {
+			timeremain = 0
+		}
+		timeSpent := submission.UpdatedAt.Sub(submission.CreatedAt)
+		timeSpent = timeSpent.Round(time.Second)
+		response.Assessment = assessmentWithoutQuestions
+		response.MaxScore = 100
+		response.Question = len(assessment.Questions)
+		response.SubmittedAnswer = len(submission.Answers)
+		response.Score = &score
+		response.SubmissionID = &submission.ID
+		response.SubmissionStatus = submission.Status
+		response.TimeRemaining = &timeremain
+		response.TimeSpent = &timeSpent
 	}
-	response := &dto.GetAssessmentByIDAndByUserIDResponse{
-		Assessment:      assessment,
-		SubmittedAnswer: 0,
-		Question:        len(assessment.Questions),
-		SubmissionStatus: submission.Status,
-		SubmissionID:    nil,
-	}
-	return response, nil
+	return &response, nil
 }

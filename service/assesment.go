@@ -239,6 +239,10 @@ func (assesmentService *assesmentService) GetAssessmentByIDAndUserID(ctx context
 		Assessment: assessments.Assessment,
 		SubmittedAnswer: assessments.SubmittedAnswer,
 		Question: assessments.Question,
+		TimeSpent: assessments.TimeSpent,
+		TimeRemaining: assessments.TimeRemaining,
+		MaxScore: assessments.MaxScore,
+		Score: assessments.Score,
 		SubmissionStatus: assessments.SubmissionStatus,
 		SubmissionID: assessments.SubmissionID,
 	}, nil 

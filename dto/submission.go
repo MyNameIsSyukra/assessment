@@ -29,7 +29,7 @@ type GetSubmissionStudentResponse struct {
 	Kelas_kelasID uuid.UUID `gorm:"type:uuid" json:"kelas_kelas_id"`
 	Status entities.ExamStatus `json:"status"`
 	Score  float64       `json:"score"`
-	TimeRemaining *int64        `json:"time_remaining,omitempty"`
+	TimeRemaining *int64        `json:"time_remaining"`
 }
 
 type Role string

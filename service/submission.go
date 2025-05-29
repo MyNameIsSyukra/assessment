@@ -12,10 +12,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron/v3"
 )
 
 type (
@@ -31,6 +33,7 @@ type (
 		GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error)
 		GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string)  ([]dto.GetSubmissionStudentResponse, error)
+		
 	}
 	submissionService struct {
 		submissionRepo repository.SubmissionRepository
@@ -93,6 +96,14 @@ func (submissionService *submissionService) CreateSubmission(ctx context.Context
 	if err != nil {
 		return dto.SubmissionCreateResponse{}, err
 	}
+	// create cron job to update submission status
+	scheduler := NewSubmissionScheduler(submissionService)
+	if err := scheduler.ScheduleAutoSubmit(createdSubmission); err != nil {
+		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to schedule auto submit: %w", err)
+	}
+	
+	// Start the scheduler
+	scheduler.Start()
 
 	return dto.SubmissionCreateResponse{
 		ID:             createdSubmission.ID,
@@ -286,15 +297,103 @@ func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(
 	
 	return studentSubmission, nil
 }
-	// var res []dto.GetSubmissionStudentResponse
-	// if flag == "" {
-	// 	return result, nil
-	// }
+
+
+
+func (s *SubmissionScheduler) Start() {
+	s.cron.Start()
+}
+
+func (s *SubmissionScheduler) Stop() {
+	s.cron.Stop()
+}
+
+func NewSubmissionScheduler(submissionService *submissionService) *SubmissionScheduler {
+	return &SubmissionScheduler{
+		cron: cron.New(),
+		submissionService: submissionService,
+		jobs: make(map[string]cron.EntryID),
+	}
+}
+
+// Dalam CreateSubmission method
+type SubmissionScheduler struct {
+	cron *cron.Cron
+	submissionService *submissionService
+	jobs map[string]cron.EntryID // Map untuk track job IDs
+	mu   sync.RWMutex           // Mutex untuk thread safety
+}
+
+func (s *SubmissionScheduler) ScheduleAutoSubmit(submission *entities.Submission) error {
+	// Cron expression format: second minute hour day month dayofweek
+	// Tapi robfig/cron/v3 menggunakan format standar: minute hour day month dayofweek
+	cronExpr := fmt.Sprintf("%d %d %d %d *", 
+		submission.EndedTime.Minute(),
+		submission.EndedTime.Hour(),
+		submission.EndedTime.Day(),
+		int(submission.EndedTime.Month()),
+	)
+
+	jobKey := fmt.Sprintf("auto_submit_%s", submission.ID.String())
 	
-	// for _, m := range result {
-	// 	if m.Status == entities.ExamStatus(flag){
-	// 		res = append(res, m)
-	// 	}
-	// }
+	entryID, err := s.cron.AddFunc(cronExpr, func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+		
+		s.submissionService.Submitted(ctx, submission.ID)
+		
+		// Remove job setelah dijalankan
+		s.removeJob(jobKey)
+	})
+	
+	if err != nil {
+		return err
+	}
+	
+	// Simpan job ID untuk bisa di-remove nanti
+	s.mu.Lock()
+	s.jobs[jobKey] = entryID
+	s.mu.Unlock()
+	
+	return nil
+}
 
+func (s *SubmissionScheduler) removeJob(jobKey string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
+	if entryID, exists := s.jobs[jobKey]; exists {
+		s.cron.Remove(entryID)
+		delete(s.jobs, jobKey)
+	}
+}
 
+// Method untuk cancel job jika submission di-submit manual sebelum deadline
+func (s *SubmissionScheduler) CancelAutoSubmit(submissionID string) {
+	jobKey := fmt.Sprintf("auto_submit_%s", submissionID)
+	s.removeJob(jobKey)
+}
+
+// Alternatif: Background service yang cek database secara berkala
+func (submissionService *submissionService) StartAutoSubmitWorker() {
+	ticker := time.NewTicker(time.Minute * 1) // Cek setiap menit
+	go func() {
+		for range ticker.C {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
+			
+			// Get submissions yang sudah expired tapi belum submitted
+			expiredSubmissions, err := submissionService.submissionRepo.GetExpiredSubmissions(ctx, nil)
+			if err != nil {
+				fmt.Printf("Failed to get expired submissions: %v\n", err)
+				cancel()
+				continue
+			}
+			
+			for _, submission := range expiredSubmissions {
+				submissionService.Submitted(ctx, submission.ID)
+			}
+			
+			cancel()
+		}
+	}()
+}
