@@ -91,15 +91,7 @@ func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Contex
 }
 
 func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Query("id"))
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-
 	var request dto.AssessmentUpdateRequest
-	request.IdEvaluation = id
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -130,7 +122,7 @@ func (assesmentController *assesmentController) DeleteAssessment(ctx *gin.Contex
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	res := utils.SuccessResponse("Deleted successfully")
+	res := utils.SuccessResponse(nil)
 	ctx.JSON(http.StatusOK, res)
 }
 

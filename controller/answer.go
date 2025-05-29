@@ -78,19 +78,12 @@ func (answerController *answerController) GetAnswerByID(ctx *gin.Context) {
 }
 
 func (answerController *answerController) UpdateAnswer(ctx *gin.Context) {
-	id,err := uuid.Parse(ctx.Query("id"))
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
 	var request dto.AnswerUpdateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	request.ID = id
 	answer, err := answerController.answerService.UpdateAnswer(ctx.Request.Context(), &request)
 	if err != nil {
 		res := utils.FailedResponse(err.Error())

@@ -107,19 +107,30 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 
 func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx context.Context, tx *gorm.DB, id uuid.UUID, userID uuid.UUID) (*dto.GetAssessmentByIDAndByUserIDResponse, error) {
 	var assessment entities.Assessment
-	if err := assesmentRepo.Db.Where("id = ?", id).First(&assessment).Error; err != nil {
+	if err := assesmentRepo.Db.Where("id = ?", id).Preload("Questions").First(&assessment).Error; err != nil {
 		return &dto.GetAssessmentByIDAndByUserIDResponse{}, err
 	}
 	var submission entities.Submission
 	submission.Status = entities.StatusTodo
-	if err := assesmentRepo.Db.Where("assessment_id = ? AND user_id = ?", id, userID).First(&submission).Error; err != nil {
+	if err := assesmentRepo.Db.Where("assessment_id = ? AND user_id = ?", id, userID).Preload("Answers").First(&submission).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return &dto.GetAssessmentByIDAndByUserIDResponse{}, err
 		}
 	}
+	assessmentWithoutQuestions := entities.Assessment{
+		ID:          assessment.ID,
+		Name:        assessment.Name,
+		Description: assessment.Description,
+		StartTime:   assessment.StartTime,
+		EndTime:     assessment.EndTime,
+		Duration:    assessment.Duration,
+		CreatedAt:   assessment.CreatedAt,
+		UpdatedAt:   assessment.UpdatedAt,
+		ClassID:     assessment.ClassID,
+	}
 	if submission.ID != uuid.Nil {
 		response := &dto.GetAssessmentByIDAndByUserIDResponse{
-			Assessment:      assessment,
+			Assessment:      assessmentWithoutQuestions,
 			SubmittedAnswer: len(submission.Answers),
 			Question:        len(assessment.Questions),
 			SubmissionStatus: submission.Status,

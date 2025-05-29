@@ -103,6 +103,9 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 	if answ == nil {
 		return &entities.Answer{}, utils.ErrGetAnswerByID
 	}
+	if answ.Submission.Status != "in_progress" {
+		return &entities.Answer{}, errors.New("submission is not in progress")
+	}
 	data := entities.Answer{
 		ID: answ.ID,
 		QuestionID: answer.IdQuestion,
@@ -130,11 +133,4 @@ func (answerService *answerService) GetAnswerBySubmissionID(ctx context.Context,
 		return []dto.GetAnswerBySubmissionIDResponse{}, utils.ErrGetAnswerBySubmissionID
 	}
 	return answer, nil
-}
-// func (answerService *answerService) GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error) {
-// 	answers, err := answerService.answerRepo.GetAnswerByStudentID(ctx, nil, id)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return answers, nil
-// }	
+}	

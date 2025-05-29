@@ -165,92 +165,127 @@ func (submissionService *submissionService) Submitted(ctx context.Context, submi
 	if err != nil {
 		return &entities.Submission{}, err
 	}
+	res := entities.Submission{
+		ID: result.ID,
+		UserID: result.UserID,
+		AssessmentID: result.AssessmentID,
+		Status: result.Status,
+		EndedTime: result.EndedTime,
+	}
 
-	return result, nil
+	return &res, nil
 }
 
-func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID,flag string) ([]dto.GetSubmissionStudentResponse, error) {
-// func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID,flag string) (, error) {
+
+func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string) ([]dto.GetSubmissionStudentResponse, error) {
+	// Inisialisasi slice dengan kapasitas 0 tapi bukan nil
+	studentSubmission := make([]dto.GetSubmissionStudentResponse, 0)
+	
 	assesment, err := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
 	if err != nil {
-		return []dto.GetSubmissionStudentResponse{}, err
-	}
-	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
-	if err != nil {
-		return []dto.GetSubmissionStudentResponse{}, err
-	}
-	classID := assesment.ClassID
-	url := fmt.Sprintf("http://localhost:8081/service/class/%s", classID)
-	resp, err := http.Get(url)
-	if err != nil {
-		return []dto.GetSubmissionStudentResponse{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return []dto.GetSubmissionStudentResponse{}, fmt.Errorf("failed to read response body: %w", err)
-	}
-	var members []dto.GetSubmissionStudentResponse
-	if err := json.Unmarshal(body, &members); err != nil {
-		return []dto.GetSubmissionStudentResponse{}, fmt.Errorf("failed to unmarshal JSON: %w", err)
+		return studentSubmission, err // Return empty slice instead of nil
 	}
 	
+	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
+	if err != nil {
+		return studentSubmission, err // Return empty slice instead of nil
+	}
+	
+	classID := assesment.ClassID
+	if err := godotenv.Load(); err != nil {
+		return studentSubmission, fmt.Errorf("failed to load environment variables: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/service/class/%s", os.Getenv("CLASS_SERVICE_URL"), classID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return studentSubmission, err
+	}
+	defer resp.Body.Close()
+	
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return studentSubmission, fmt.Errorf("failed to read response body: %w", err)
+	}
+	
+	var members []dto.GetSubmissionStudentResponse
+	if err := json.Unmarshal(body, &members); err != nil {
+		return studentSubmission, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+	
+	// Buat map untuk submission
 	submissionMap := make(map[uuid.UUID]entities.Submission)
 	for _, s := range submissions {
-		// Gunakan user_id sebagai key (kalau ada banyak submission per user, bisa dihandle pakai slice)
 		submissionMap[s.UserID] = s
 	}
 	
-	status := entities.ExamStatus("todo")
-	var studentSubmission []dto.GetSubmissionStudentResponse
+	defaultStatus := entities.ExamStatus("todo")
+	
 	for _, m := range members {
-		var datas dto.GetSubmissionStudentResponse
-		if m.Role == dto.RoleTeacher{
+		// Skip teacher
+		if m.Role == dto.RoleTeacher {
 			continue
 		}
-		sub := submissionMap[m.User_userID]
-		now := time.Now()
-		duration := int64(sub.EndedTime.Sub(now).Seconds())
-		if duration < 0 {
-			duration = 0
-		}
-		if sub.Status == "" {
+		
+		// Cek apakah ada submission untuk user ini
+		sub, hasSubmission := submissionMap[m.User_userID]
+		
+		var datas dto.GetSubmissionStudentResponse
+		datas.Username = m.Username
+		datas.User_userID = m.User_userID
+		datas.Kelas_kelasID = m.Kelas_kelasID
+		datas.Role = m.Role
+		
+		if !hasSubmission {
+			// Tidak ada submission, set default values
 			datas.ID = nil
-			datas.Username = m.Username
-			datas.User_userID = m.User_userID
-			datas.Kelas_kelasID = m.Kelas_kelasID
-			datas.Role = m.Role
-			datas.Status = status	
+			datas.Status = defaultStatus
 			datas.TimeRemaining = nil
 			datas.Score = 0
-		}else if sub.Status == "in_progress" {
-			datas.ID = &sub.ID
-			datas.Username = m.Username
-			datas.User_userID = m.User_userID
-			datas.Kelas_kelasID = m.Kelas_kelasID
-			datas.Role = m.Role
-			datas.Status = sub.Status
-			datas.TimeRemaining = &duration
-			datas.Score = sub.Score
-		}else if sub.Status == "submitted" {
-			datas.ID = &sub.ID
-			datas.Username = m.Username
-			datas.User_userID = m.User_userID
-			datas.Kelas_kelasID = m.Kelas_kelasID
-			datas.Role = m.Role
-			datas.Status = sub.Status
-			datas.TimeRemaining = nil
-			datas.Score = sub.Score
+		} else {
+			// Ada submission, set berdasarkan status
+			switch sub.Status {
+			case "in_progress":
+				now := time.Now()
+				duration := int64(sub.EndedTime.Sub(now).Seconds())
+				if duration < 0 {
+					duration = 0
+				}
+				
+				datas.ID = &sub.ID
+				datas.Status = sub.Status
+				datas.TimeRemaining = &duration
+				datas.Score = sub.Score
+				
+			case "submitted":
+				datas.ID = &sub.ID
+				datas.Status = sub.Status
+				datas.TimeRemaining = nil
+				datas.Score = sub.Score
+				
+			case "todo":
+				datas.ID = nil
+				datas.Status = sub.Status
+				datas.TimeRemaining = nil
+				datas.Score = 0
+				
+			default:
+				// Status tidak dikenal, gunakan default
+				datas.ID = nil
+				datas.Status = defaultStatus
+				datas.TimeRemaining = nil
+				datas.Score = 0
 			}
-		if sub.Status == entities.ExamStatus(flag){
-		studentSubmission = append(studentSubmission, datas)
-		}else if flag == "" {
+		}
+		
+		// Filter berdasarkan flag
+		if flag == "" || string(datas.Status) == flag {
 			studentSubmission = append(studentSubmission, datas)
 		}
 	}
+	
 	return studentSubmission, nil
 }
-
 	// var res []dto.GetSubmissionStudentResponse
 	// if flag == "" {
 	// 	return result, nil

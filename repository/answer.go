@@ -47,7 +47,7 @@ func (answerRepo *answerRepository) CreateAnswer(ctx context.Context, tx *gorm.D
 
 func (answerRepo *answerRepository) GetAnswerByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Answer, error) {
 	var answer entities.Answer
-	if err := answerRepo.Db.Where("id = ?", id).First(&answer).Error; err != nil {
+	if err := answerRepo.Db.Where("id = ?", id).Preload("Submission").First(&answer).Error; err != nil {
 		return &entities.Answer{}, err
 	}
 	return &answer, nil
@@ -62,9 +62,6 @@ func (answerRepo *answerRepository) GetAllAnswers() ([]entities.Answer, error) {
 }
 
 func (answerRepo *answerRepository) UpdateAnswer(ctx context.Context, tx *gorm.DB, answer *entities.Answer) (*entities.Answer, error) {
-	// if err := answerRepo.Db.Save(answer).Error; err != nil {
-	// 	return nil, err
-	// }
 	if err := answerRepo.Db.Where("id = ?",answer.ID).Updates(answer).Error; err != nil {
 		return &entities.Answer{}, err
 	}

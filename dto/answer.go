@@ -24,7 +24,7 @@ type AnswerResponse struct {
 }
 
 type AnswerUpdateRequest struct {
-	ID         uuid.UUID ` json:"id"`
+	ID         uuid.UUID `gorm:"type:uuid" json:"id" binding:"required"`
 	IdQuestion uuid.UUID `gorm:"type:uuid" json:"id_question"`
 	IdStudent  uuid.UUID `gorm:"type:uuid" json:"id_student"`
 	IdChoice   uuid.UUID `gorm:"type:uuid" json:"id_choice"`

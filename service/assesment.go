@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -171,6 +172,9 @@ func (assesmentService *assesmentService) UpdateAssessment(ctx context.Context, 
 	}
 	if err != nil {
 		return &entities.Assessment{}, err
+	}
+	if ass.StartTime.Before(time.Now()){
+		return nil,errors.New("the assessment already started")
 	}
 	assesmentEntity := entities.Assessment{
 		ID: ass.ID,
