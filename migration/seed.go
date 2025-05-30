@@ -405,20 +405,38 @@ func SeedSubmissionsAndAnswers(db *gorm.DB, assessments []entities.Assessment, s
 			statusRand := rand.Float32()
 			var status entities.ExamStatus
 			var submittedAt time.Time
+			var createdAt time.Time
 			var endedTime time.Time
+
+			// Set CreatedAt untuk submission (kapan submission dimulai)
+			createdAt = time.Now().Add(-time.Duration(rand.Intn(7*24)) * time.Hour) // Random time in last week
+
+			// Calculate EndedTime berdasarkan CreatedAt + Duration assessment
+			expectedEndTime := createdAt.Add(time.Duration(assessment.Duration) * time.Minute)
 
 			if statusRand < 0.7 { // 70% submitted
 				status = entities.StatusSubmitted
-				submittedAt = time.Now().Add(-time.Duration(rand.Intn(7*24)) * time.Hour) // Random time in last week
-				endedTime = submittedAt
+				// SubmittedAt bisa sebelum atau pada expectedEndTime
+				maxSubmissionDelay := int(time.Duration(assessment.Duration) * time.Minute / time.Hour) // Convert to hours
+				if maxSubmissionDelay < 1 {
+					maxSubmissionDelay = 1
+				}
+				submittedAt = createdAt.Add(time.Duration(rand.Intn(maxSubmissionDelay*60)) * time.Minute)
+				
+				// EndedTime adalah waktu ketika submission selesai (bisa sama dengan submittedAt atau expectedEndTime)
+				if submittedAt.Before(expectedEndTime) {
+					endedTime = submittedAt // Selesai lebih awal
+				} else {
+					endedTime = expectedEndTime // Selesai tepat waktu
+				}
 			} else if statusRand < 0.9 { // 20% in progress
 				status = entities.StatusInProgress
 				submittedAt = time.Time{} // Zero time for in progress
-				endedTime = time.Time{}
+				endedTime = expectedEndTime // Expected end time
 			} else { // 10% todo
 				status = entities.StatusTodo
-				submittedAt = time.Time{}
-				endedTime = time.Time{}
+				submittedAt = time.Time{} // Zero time for todo
+				endedTime = expectedEndTime // Expected end time
 			}
 
 			submission := entities.Submission{
@@ -427,6 +445,8 @@ func SeedSubmissionsAndAnswers(db *gorm.DB, assessments []entities.Assessment, s
 				EndedTime:    endedTime,
 				SubmittedAt:  submittedAt,
 				Status:       status,
+				CreatedAt:    createdAt, // Tambahkan CreatedAt
+				UpdatedAt:    time.Now(),
 			}
 
 			// Only calculate score for submitted assessments
@@ -500,15 +520,17 @@ func SeedSubmissionsAndAnswers(db *gorm.DB, assessments []entities.Assessment, s
 					}
 				}
 
-				fmt.Printf("Created submission for %s in %s (Score: %.1f, Status: %s)\n", 
-					student.Username, assessment.Name, submission.Score, submission.Status)
+				fmt.Printf("Created submission for %s in %s (Score: %.1f, Status: %s, Started: %s, Ended: %s)\n", 
+					student.Username, assessment.Name, submission.Score, submission.Status, 
+					createdAt.Format("2006-01-02 15:04"), endedTime.Format("2006-01-02 15:04"))
 			} else {
 				// For non-submitted status, just create the submission
 				if err := db.Create(&submission).Error; err != nil {
 					log.Printf("Error creating submission: %v", err)
 				} else {
-					fmt.Printf("Created submission for %s in %s (Score: %.1f, Status: %s)\n", 
-						student.Username, assessment.Name, submission.Score, submission.Status)
+					fmt.Printf("Created submission for %s in %s (Score: %.1f, Status: %s, Started: %s, Expected End: %s)\n", 
+						student.Username, assessment.Name, submission.Score, submission.Status,
+						createdAt.Format("2006-01-02 15:04"), endedTime.Format("2006-01-02 15:04"))
 				}
 			}
 		}
@@ -516,6 +538,7 @@ func SeedSubmissionsAndAnswers(db *gorm.DB, assessments []entities.Assessment, s
 
 	fmt.Printf("Created submissions and answers for assessments\n")
 }
+
 // ========== SUMMARY FUNCTIONS ==========
 func PrintAssessmentSummary(db *gorm.DB) {
 	fmt.Println("\n========== ASSESSMENT DATA SUMMARY ==========")

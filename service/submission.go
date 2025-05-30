@@ -27,204 +27,270 @@ type (
 		Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error)
 		GetAllSubmissions(ctx context.Context) ([]entities.Submission, error)
 		GetSubmissionByID(ctx context.Context, id uuid.UUID) (*entities.Submission, error)
-		// UpdateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (*entities.Submission, error)
 		DeleteSubmission(ctx context.Context, id uuid.UUID) error
 		GetSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error)
 		GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error)
-		GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string)  ([]dto.GetSubmissionStudentResponse, error)
+		GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string) ([]dto.GetSubmissionStudentResponse, error)
 		
+		// Add cleanup method
+		Close() error
 	}
+	
 	submissionService struct {
 		submissionRepo repository.SubmissionRepository
-		questionRepo  repository.QuestionRepository
+		questionRepo   repository.QuestionRepository
 		assessmentRepo repository.AssessmentRepository
+		scheduler      *SubmissionScheduler
+		httpClient     *http.Client
+		classServiceURL string
+		workerCtx      context.Context
+		workerCancel   context.CancelFunc
 	}
 )
 
+// Global scheduler instance - singleton pattern
+var (
+	globalScheduler *SubmissionScheduler
+	schedulerOnce   sync.Once
+)
+
+func getGlobalScheduler(service *submissionService) *SubmissionScheduler {
+	schedulerOnce.Do(func() {
+		globalScheduler = &SubmissionScheduler{
+			cron:              cron.New(cron.WithSeconds()), // Support seconds for precise timing
+			submissionService: service,
+			jobs:              make(map[string]cron.EntryID),
+		}
+		globalScheduler.cron.Start()
+	})
+	return globalScheduler
+}
+
 func NewSubmissionService(submissionRepo repository.SubmissionRepository, questionRepo repository.QuestionRepository, assessmentRepo repository.AssessmentRepository) SubmissionService {
-	return &submissionService{
-		submissionRepo: submissionRepo,
-		questionRepo:  questionRepo,
-		assessmentRepo: assessmentRepo,
-	}
-}
-
-func (submissionService *submissionService) CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error) {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
-	assesment, errr := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
-	if errr != nil {
-		return dto.SubmissionCreateResponse{}, errr
+	// Load environment variables once
+	if err := godotenv.Load(); err != nil {
+		// Log error but don't panic in production
+		fmt.Printf("Warning: failed to load .env file: %v\n", err)
 	}
 
-	// check if user is a member of the class
-	params := url.Values{}
-	params.Add("classID", assesment.ClassID.String())
-	params.Add("userID", submission.UserID.String())
-	url := fmt.Sprintf("%s/service/class/member/?%s", os.Getenv("CLASS_SERVICE_URL"), params.Encode())
-	resp, err := http.Get(url)
-	if err != nil {
-		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to get class member: %w", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return dto.SubmissionCreateResponse{}, fmt.Errorf("you are not a member of this class")
-	}
-	defer resp.Body.Close()
-
-	// check if the submission already exists
-	_,flag, _ := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID,submission.UserID)
-	if flag {
-		return dto.SubmissionCreateResponse{}, errors.New("submission already exists")
-	}
-	submissionEntity := entities.Submission{
-		UserID: 	 submission.UserID,
-		AssessmentID: submission.AssessmentID,
-		Status: "in_progress",
-		EndedTime: time.Now().Add(time.Duration(assesment.Duration) * time.Second),
+	service := &submissionService{
+		submissionRepo:  submissionRepo,
+		questionRepo:    questionRepo,
+		assessmentRepo:  assessmentRepo,
+		httpClient: &http.Client{
+			Timeout: time.Second * 30,
+		},
+		classServiceURL: os.Getenv("CLASS_SERVICE_URL"),
 	}
 	
-	var question []entities.Question
-	question, err = submissionService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
-	if err != nil {
-		question = nil
-	}
+	service.scheduler = getGlobalScheduler(service)
+	
+	// Initialize context for background worker
+	service.workerCtx, service.workerCancel = context.WithCancel(context.Background())
+	
+	// Start background worker as backup mechanism
+	service.StartAutoSubmitWorker(service.workerCtx)
+	
+	return service
+}
 
-	createdSubmission, err := submissionService.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
-	if err != nil {
-		return dto.SubmissionCreateResponse{}, err
-	}
-	// create cron job to update submission status
-	scheduler := NewSubmissionScheduler(submissionService)
-	if err := scheduler.ScheduleAutoSubmit(createdSubmission); err != nil {
-		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to schedule auto submit: %w", err)
+func (s *submissionService) Close() error {
+	// Cancel background worker
+	if s.workerCancel != nil {
+		s.workerCancel()
 	}
 	
-	// Start the scheduler
-	scheduler.Start()
-
-	return dto.SubmissionCreateResponse{
-		ID:             createdSubmission.ID,
-		UserID:         createdSubmission.UserID,
-		AssessmentID:   createdSubmission.AssessmentID,
-		EndedTime:      createdSubmission.EndedTime,
-		Question: question,
-	}, nil
-}
-
-func (submissionService *submissionService) GetAllSubmissions(ctx context.Context) ([]entities.Submission, error) {
-	if submissions, err := submissionService.submissionRepo.GetAllSubmissions(); err != nil {
-		return []entities.Submission{}, err
-	} else {
-		return submissions, nil
-	}
-}
-
-func (submissionService *submissionService) GetSubmissionByID(ctx context.Context, id uuid.UUID) (*entities.Submission, error) {
-	submission, err := submissionService.submissionRepo.GetSubmissionByID(ctx, nil, id)
-	if err != nil {
-		return &entities.Submission{}, err
-	}
-	return submission, nil
-}
-
-func (submissionService *submissionService) DeleteSubmission(ctx context.Context, id uuid.UUID) error {
-	if err := submissionService.submissionRepo.DeleteSubmission(ctx, nil, id); err != nil {
-		return err
+	// Stop scheduler
+	if s.scheduler != nil {
+		s.scheduler.Stop()
 	}
 	return nil
 }
 
-func (submissionService *submissionService) GetSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Submission, error) {
-	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
+func (s *submissionService) CreateSubmission(ctx context.Context, submission *dto.SubmissionCreateRequest) (dto.SubmissionCreateResponse, error) {
+	// Get assessment details
+	assessment, err := s.assessmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
 	if err != nil {
-		return []entities.Submission{}, err
+		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to get assessment: %w", err)
+	}
+
+	// Check if user is a member of the class
+	if err := s.checkClassMembership(ctx, assessment.ClassID, submission.UserID); err != nil {
+		return dto.SubmissionCreateResponse{}, err
+	}
+
+	// Check if submission already exists
+	_, exists, err := s.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID, submission.UserID)
+	if err != nil {
+		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to check existing submission: %w", err)
+	}
+	if exists {
+		return dto.SubmissionCreateResponse{}, errors.New("submission already exists")
+	}
+
+	// Create submission entity
+	endTime := time.Now().Add(time.Duration(assessment.Duration) * time.Second)
+	submissionEntity := entities.Submission{
+		UserID:       submission.UserID,
+		AssessmentID: submission.AssessmentID,
+		Status:       "in_progress",
+		EndedTime:    endTime,
+	}
+
+	// Get questions
+	questions, err := s.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
+	if err != nil {
+		// Log error but don't fail the submission creation
+		fmt.Printf("Warning: failed to get questions: %v\n", err)
+		questions = nil
+	}
+
+	// Create submission
+	createdSubmission, err := s.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
+	if err != nil {
+		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to create submission: %w", err)
+	}
+
+	// Schedule auto-submit - use the global scheduler
+	if err := s.scheduler.ScheduleAutoSubmit(createdSubmission); err != nil {
+		// Log error but don't fail the submission creation
+		fmt.Printf("Warning: failed to schedule auto submit: %v\n", err)
+	}
+
+	return dto.SubmissionCreateResponse{
+		ID:           createdSubmission.ID,
+		UserID:       createdSubmission.UserID,
+		AssessmentID: createdSubmission.AssessmentID,
+		EndedTime:    createdSubmission.EndedTime,
+		Question:     questions,
+	}, nil
+}
+
+func (s *submissionService) checkClassMembership(ctx context.Context, classID, userID uuid.UUID) error {
+	params := url.Values{}
+	params.Add("classID", classID.String())
+	params.Add("userID", userID.String())
+	
+	reqURL := fmt.Sprintf("%s/service/class/member/?%s", s.classServiceURL, params.Encode())
+	
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to check class membership: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("you are not a member of this class")
+	}
+	
+	return nil
+}
+
+func (s *submissionService) GetAllSubmissions(ctx context.Context) ([]entities.Submission, error) {
+	submissions, err := s.submissionRepo.GetAllSubmissions()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all submissions: %w", err)
 	}
 	return submissions, nil
 }
 
-func (submissionService *submissionService) GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error) {
-	submissions, err := submissionService.submissionRepo.GetSubmissionsByUserID(ctx, nil, userID)
+func (s *submissionService) GetSubmissionByID(ctx context.Context, id uuid.UUID) (*entities.Submission, error) {
+	submission, err := s.submissionRepo.GetSubmissionByID(ctx, nil, id)
 	if err != nil {
-		return []entities.Submission{}, err
-	}
-	return submissions, nil
-}
-
-func (submissionService *submissionService) GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error) {
-	submission,_, err := submissionService.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, assessmentID, userID)
-	if err != nil {
-		return &entities.Submission{}, err
+		return nil, fmt.Errorf("failed to get submission by ID: %w", err)
 	}
 	return submission, nil
 }
 
-func (submissionService *submissionService) Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error) {
-	submission, err := submissionService.submissionRepo.GetSubmissionByID(ctx, nil, submissionID)
-	if err != nil {
-		return &entities.Submission{}, err
+func (s *submissionService) DeleteSubmission(ctx context.Context, id uuid.UUID) error {
+	// Cancel any scheduled auto-submit for this submission
+	s.scheduler.CancelAutoSubmit(id.String())
+	
+	if err := s.submissionRepo.DeleteSubmission(ctx, nil, id); err != nil {
+		return fmt.Errorf("failed to delete submission: %w", err)
 	}
-	data := entities.Submission{
-		ID: submission.ID,
-		UserID: submission.UserID,
-		AssessmentID: submission.AssessmentID,
-		Status: "submitted",
-	}
-	result, err := submissionService.submissionRepo.Submitted(ctx, nil, &data)
-	if err != nil {
-		return &entities.Submission{}, err
-	}
-	res := entities.Submission{
-		ID: result.ID,
-		UserID: result.UserID,
-		AssessmentID: result.AssessmentID,
-		Status: result.Status,
-		EndedTime: result.EndedTime,
-	}
-
-	return &res, nil
+	return nil
 }
 
+func (s *submissionService) GetSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Submission, error) {
+	submissions, err := s.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get submissions by assessment ID: %w", err)
+	}
+	return submissions, nil
+}
 
-func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string) ([]dto.GetSubmissionStudentResponse, error) {
-	// Inisialisasi slice dengan kapasitas 0 tapi bukan nil
+func (s *submissionService) GetSubmissionsByUserID(ctx context.Context, userID uuid.UUID) ([]entities.Submission, error) {
+	submissions, err := s.submissionRepo.GetSubmissionsByUserID(ctx, nil, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get submissions by user ID: %w", err)
+	}
+	return submissions, nil
+}
+
+func (s *submissionService) GetSubmissionsByAssessmentIDAndUserID(ctx context.Context, assessmentID uuid.UUID, userID uuid.UUID) (*entities.Submission, error) {
+	submission, _, err := s.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, assessmentID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get submission by assessment and user ID: %w", err)
+	}
+	return submission, nil
+}
+
+func (s *submissionService) Submitted(ctx context.Context, submissionID uuid.UUID) (*entities.Submission, error) {
+	submission, err := s.submissionRepo.GetSubmissionByID(ctx, nil, submissionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get submission: %w", err)
+	}
+
+	// Don't update if already submitted
+	if submission.Status == "submitted" {
+		return submission, nil
+	}
+
+	data := entities.Submission{
+		ID:           submission.ID,
+		UserID:       submission.UserID,
+		AssessmentID: submission.AssessmentID,
+		Status:       "submitted",
+	}
+	
+	result, err := s.submissionRepo.Submitted(ctx, nil, &data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update submission status: %w", err)
+	}
+
+	// Cancel auto-submit job
+	s.scheduler.CancelAutoSubmit(result.ID.String())
+
+	return result, nil
+}
+
+func (s *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID, flag string) ([]dto.GetSubmissionStudentResponse, error) {
 	studentSubmission := make([]dto.GetSubmissionStudentResponse, 0)
 	
-	assesment, err := submissionService.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
+	assessment, err := s.assessmentRepo.GetAssessmentByID(ctx, nil, assessmentID)
 	if err != nil {
-		return studentSubmission, err // Return empty slice instead of nil
+		return studentSubmission, fmt.Errorf("failed to get assessment: %w", err)
 	}
 	
-	submissions, err := submissionService.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
+	submissions, err := s.submissionRepo.GetSubmissionsByAssessmentID(ctx, nil, assessmentID)
 	if err != nil {
-		return studentSubmission, err // Return empty slice instead of nil
+		return studentSubmission, fmt.Errorf("failed to get submissions: %w", err)
 	}
 	
-	classID := assesment.ClassID
-	if err := godotenv.Load(); err != nil {
-		return studentSubmission, fmt.Errorf("failed to load environment variables: %w", err)
-	}
-
-	url := fmt.Sprintf("%s/service/class/%s", os.Getenv("CLASS_SERVICE_URL"), classID)
-	resp, err := http.Get(url)
+	// Get class members
+	members, err := s.getClassMembers(ctx, assessment.ClassID)
 	if err != nil {
-		return studentSubmission, err
-	}
-	defer resp.Body.Close()
-	
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return studentSubmission, fmt.Errorf("failed to read response body: %w", err)
+		return studentSubmission, fmt.Errorf("failed to get class members: %w", err)
 	}
 	
-	var members []dto.GetSubmissionStudentResponse
-	if err := json.Unmarshal(body, &members); err != nil {
-		return studentSubmission, fmt.Errorf("failed to unmarshal JSON: %w", err)
-	}
-	
-	// Buat map untuk submission
+	// Create submission lookup map
 	submissionMap := make(map[uuid.UUID]entities.Submission)
 	for _, s := range submissions {
 		submissionMap[s.UserID] = s
@@ -232,125 +298,149 @@ func (submissionService *submissionService) GetStudentSubmissionsByAssessmentID(
 	
 	defaultStatus := entities.ExamStatus("todo")
 	
-	for _, m := range members {
-		// Skip teacher
-		if m.Role == dto.RoleTeacher {
+	for _, member := range members {
+		// Skip teachers
+		if member.Role == dto.RoleTeacher {
 			continue
 		}
 		
-		// Cek apakah ada submission untuk user ini
-		sub, hasSubmission := submissionMap[m.User_userID]
-		
-		var datas dto.GetSubmissionStudentResponse
-		datas.Username = m.Username
-		datas.User_userID = m.User_userID
-		datas.Kelas_kelasID = m.Kelas_kelasID
-		datas.Role = m.Role
-		
-		if !hasSubmission {
-			// Tidak ada submission, set default values
-			datas.ID = nil
-			datas.Status = defaultStatus
-			datas.TimeRemaining = nil
-			datas.Score = 0
-		} else {
-			// Ada submission, set berdasarkan status
-			switch sub.Status {
-			case "in_progress":
-				now := time.Now()
-				duration := int64(sub.EndedTime.Sub(now).Seconds())
-				if duration < 0 {
-					duration = 0
-				}
-				
-				datas.ID = &sub.ID
-				datas.Status = sub.Status
-				datas.TimeRemaining = &duration
-				datas.Score = sub.Score
-				
-			case "submitted":
-				datas.ID = &sub.ID
-				datas.Status = sub.Status
-				datas.TimeRemaining = nil
-				datas.Score = sub.Score
-				
-			case "todo":
-				datas.ID = nil
-				datas.Status = sub.Status
-				datas.TimeRemaining = nil
-				datas.Score = 0
-				
-			default:
-				// Status tidak dikenal, gunakan default
-				datas.ID = nil
-				datas.Status = defaultStatus
-				datas.TimeRemaining = nil
-				datas.Score = 0
-			}
+		response := dto.GetSubmissionStudentResponse{
+			Username:      member.Username,
+			User_userID:   member.User_userID,
+			Kelas_kelasID: member.Kelas_kelasID,
+			Role:          member.Role,
 		}
 		
-		// Filter berdasarkan flag
-		if flag == "" || string(datas.Status) == flag {
-			studentSubmission = append(studentSubmission, datas)
+		if submission, hasSubmission := submissionMap[member.User_userID]; hasSubmission {
+			s.populateSubmissionResponse(&response, &submission)
+		} else {
+			// No submission found
+			response.ID = nil
+			response.Status = defaultStatus
+			response.TimeRemaining = nil
+			response.Score = 0
+		}
+		
+		// Apply filter
+		if flag == "" || string(response.Status) == flag {
+			studentSubmission = append(studentSubmission, response)
 		}
 	}
 	
 	return studentSubmission, nil
 }
 
-
-
-func (s *SubmissionScheduler) Start() {
-	s.cron.Start()
+func (s *submissionService) getClassMembers(ctx context.Context, classID uuid.UUID) ([]dto.GetSubmissionStudentResponse, error) {
+	reqURL := fmt.Sprintf("%s/service/class/%s", s.classServiceURL, classID)
+	
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get class members: %w", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get class members: status %d", resp.StatusCode)
+	}
+	
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	
+	var members []dto.GetSubmissionStudentResponse
+	if err := json.Unmarshal(body, &members); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+	
+	return members, nil
 }
 
-func (s *SubmissionScheduler) Stop() {
-	s.cron.Stop()
-}
-
-func NewSubmissionScheduler(submissionService *submissionService) *SubmissionScheduler {
-	return &SubmissionScheduler{
-		cron: cron.New(),
-		submissionService: submissionService,
-		jobs: make(map[string]cron.EntryID),
+func (s *submissionService) populateSubmissionResponse(response *dto.GetSubmissionStudentResponse, submission *entities.Submission) {
+	switch submission.Status {
+	case "in_progress":
+		now := time.Now()
+		duration := int64(submission.EndedTime.Sub(now).Seconds())
+		if duration < 0 {
+			duration = 0
+		}
+		
+		response.ID = &submission.ID
+		response.Status = submission.Status
+		response.TimeRemaining = &duration
+		response.Score = submission.Score
+		
+	case "submitted":
+		response.ID = &submission.ID
+		response.Status = submission.Status
+		response.TimeRemaining = nil
+		response.Score = submission.Score
+		
+	case "todo":
+		response.ID = nil
+		response.Status = submission.Status
+		response.TimeRemaining = nil
+		response.Score = 0
+		
+	default:
+		// Unknown status, use defaults
+		response.ID = nil
+		response.Status = entities.ExamStatus("todo")
+		response.TimeRemaining = nil
+		response.Score = 0
 	}
 }
 
-// Dalam CreateSubmission method
+// SubmissionScheduler with improved implementation
 type SubmissionScheduler struct {
-	cron *cron.Cron
+	cron              *cron.Cron
 	submissionService *submissionService
-	jobs map[string]cron.EntryID // Map untuk track job IDs
-	mu   sync.RWMutex           // Mutex untuk thread safety
+	jobs              map[string]cron.EntryID
+	mu                sync.RWMutex
 }
 
 func (s *SubmissionScheduler) ScheduleAutoSubmit(submission *entities.Submission) error {
-	// Cron expression format: second minute hour day month dayofweek
-	// Tapi robfig/cron/v3 menggunakan format standar: minute hour day month dayofweek
-	cronExpr := fmt.Sprintf("%d %d %d %d *", 
-		submission.EndedTime.Minute(),
-		submission.EndedTime.Hour(),
-		submission.EndedTime.Day(),
-		int(submission.EndedTime.Month()),
-	)
-
+	// Calculate time until submission ends
+	now := time.Now()
+	if submission.EndedTime.Before(now) {
+		// Already expired, submit immediately
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+			defer cancel()
+			s.submissionService.Submitted(ctx, submission.ID)
+		}()
+		return nil
+	}
+	
+	// Use AddFunc with @at syntax for one-time execution
 	jobKey := fmt.Sprintf("auto_submit_%s", submission.ID.String())
 	
-	entryID, err := s.cron.AddFunc(cronExpr, func() {
+	// Calculate seconds until deadline
+	secondsUntil := int(submission.EndedTime.Sub(now).Seconds())
+	
+	entryID, err := s.cron.AddFunc(fmt.Sprintf("@every %ds", secondsUntil), func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 		defer cancel()
 		
-		s.submissionService.Submitted(ctx, submission.ID)
+		// Auto-submit the submission
+		if _, err := s.submissionService.Submitted(ctx, submission.ID); err != nil {
+			fmt.Printf("Failed to auto-submit submission %s: %v\n", submission.ID, err)
+		}
 		
-		// Remove job setelah dijalankan
+		// Remove the job after execution
 		s.removeJob(jobKey)
 	})
 	
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to schedule auto submit: %w", err)
 	}
 	
-	// Simpan job ID untuk bisa di-remove nanti
+	// Store job ID
 	s.mu.Lock()
 	s.jobs[jobKey] = entryID
 	s.mu.Unlock()
@@ -368,32 +458,54 @@ func (s *SubmissionScheduler) removeJob(jobKey string) {
 	}
 }
 
-// Method untuk cancel job jika submission di-submit manual sebelum deadline
 func (s *SubmissionScheduler) CancelAutoSubmit(submissionID string) {
 	jobKey := fmt.Sprintf("auto_submit_%s", submissionID)
 	s.removeJob(jobKey)
 }
 
-// Alternatif: Background service yang cek database secara berkala
-func (submissionService *submissionService) StartAutoSubmitWorker() {
-	ticker := time.NewTicker(time.Minute * 1) // Cek setiap menit
+func (s *SubmissionScheduler) Stop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
+	// Remove all jobs
+	for jobKey, entryID := range s.jobs {
+		s.cron.Remove(entryID)
+		delete(s.jobs, jobKey)
+	}
+	
+	s.cron.Stop()
+}
+
+// Background worker as alternative/backup
+func (s *submissionService) StartAutoSubmitWorker(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour * 1)
 	go func() {
-		for range ticker.C {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
-			
-			// Get submissions yang sudah expired tapi belum submitted
-			expiredSubmissions, err := submissionService.submissionRepo.GetExpiredSubmissions(ctx, nil)
-			if err != nil {
-				fmt.Printf("Failed to get expired submissions: %v\n", err)
-				cancel()
-				continue
+		defer ticker.Stop()
+		
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.processExpiredSubmissions()
 			}
-			
-			for _, submission := range expiredSubmissions {
-				submissionService.Submitted(ctx, submission.ID)
-			}
-			
-			cancel()
 		}
 	}()
+}
+
+func (s *submissionService) processExpiredSubmissions() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
+	defer cancel()
+	
+	expiredSubmissions, err := s.submissionRepo.GetExpiredSubmissions(ctx, nil)
+	if err != nil {
+		fmt.Printf("Failed to get expired submissions: %v\n", err)
+		return
+	}
+	
+	for _, submission := range expiredSubmissions {
+		if _, err := s.Submitted(ctx, submission.ID); err != nil {
+			fmt.Printf("Failed to auto-submit expired submission %s: %v\n", submission.ID, err)
+		}
+	}
 }

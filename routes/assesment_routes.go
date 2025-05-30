@@ -17,7 +17,6 @@ func Assessment(route *gin.Engine, injector *do.Injector) {
 		routes.PUT("/", asssessmentController.UpdateAssessment)
 		routes.DELETE("/", asssessmentController.DeleteAssessment)
 		routes.GET("/class/", asssessmentController.GetAllAssesmentByClassID)
-		// routes.GET("", asssessmentController.GetAllAssessments)
 	}
 
 	// Student routes

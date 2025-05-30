@@ -13,7 +13,7 @@ func Submission(route *gin.Engine, injector *do.Injector) {
 	routes := route.Group("/submission")
 	{
 		routes.POST("", submissionController.CreateSubmission)
-		routes.GET("", submissionController.GetAllSubmissions)
+		// routes.GET("", submissionController.GetAllSubmissions)
 		routes.GET("/", submissionController.GetSubmissionByID)
 		routes.DELETE("/", submissionController.DeleteSubmission)
 		routes.GET("/user/", submissionController.GetSubmissionsByUserID)
