@@ -309,7 +309,7 @@ func (s *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Cont
 			User_userID:   member.User_userID,
 			Kelas_kelasID: member.Kelas_kelasID,
 			Role:          member.Role,
-			PhotoUrl:      fmt.Sprintf("%s/storage/user_profile_pictures/%s",os.Getenv("GATEWAY_URL"), member.User_userID.String()),
+			PhotoUrl:      fmt.Sprintf("%s/storage/user_profile_pictures/%s.jpg",os.Getenv("GATEWAY_URL"), member.User_userID.String()),
 		}
 		
 		if submission, hasSubmission := submissionMap[member.User_userID]; hasSubmission {

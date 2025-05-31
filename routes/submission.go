@@ -15,7 +15,6 @@ func Submission(route *gin.Engine, injector *do.Injector) {
 		routes.POST("", submissionController.CreateSubmission)
 		// routes.GET("", submissionController.GetAllSubmissions)
 		routes.GET("/", submissionController.GetSubmissionByID)
-		routes.DELETE("/", submissionController.DeleteSubmission)
 		routes.GET("/user/", submissionController.GetSubmissionsByUserID)
 		routes.POST("/submit/", submissionController.Submitted)
 	}
@@ -24,6 +23,7 @@ func Submission(route *gin.Engine, injector *do.Injector) {
 	routes = route.Group("assement/submission")
 	{
 		routes.GET("/",submissionController.GetStudentSubmissionsByAssessmentID)
+		routes.DELETE("/", submissionController.DeleteSubmission)
 	}
 }
 
