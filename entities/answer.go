@@ -18,13 +18,14 @@ import (
 // }
 
 type Answer struct {
-    ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+    ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"answer_id"`
     QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id"`
     ChoiceID   uuid.UUID `gorm:"type:uuid" json:"choice_id"`
     SubmissionID uuid.UUID `gorm:"type:uuid" json:"submission_id"`
     CreatedAt  time.Time `json:"created_at"`
     UpdatedAt  time.Time `json:"updated_at"`
     DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+    
     // Relasi ke Question
     Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
     

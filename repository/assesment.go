@@ -4,7 +4,6 @@ import (
 	"assesment/dto"
 	entities "assesment/entities"
 	"context"
-	"fmt"
 	"math"
 	"time"
 
@@ -133,7 +132,6 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 	}
 	var response dto.GetAssessmentByIDAndByUserIDResponse
 	if submission.ID == uuid.Nil {
-		fmt.Println("Submission todo")
 		response.Assessment = assessmentWithoutQuestions
 		response.MaxScore = 100
 		response.Question = len(assessment.Questions)
@@ -144,7 +142,6 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 		response.TimeRemaining = nil
 		response.TimeSpent = nil
 	}else if submission.Status == entities.StatusInProgress{
-		fmt.Println("Submission in progress")
 		timeremain := submission.EndedTime.Sub(time.Now())
 		timeremain = timeremain.Round(time.Second)
 		if timeremain < 0 {

@@ -166,7 +166,7 @@ func (assesmentService *assesmentService) TeacherGetAssessmentByID(ctx context.C
 }
 
 func (assesmentService *assesmentService) UpdateAssessment(ctx context.Context, assesment *dto.AssessmentUpdateRequest) (*entities.Assessment, error) {
-	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.IdEvaluation)
+	ass,err := assesmentService.assesmentRepo.GetAssessmentByID(ctx, nil, assesment.Assessment_id)
 	if ass == nil {
 		return &entities.Assessment{}, errors.New("no assessment found")
 	}

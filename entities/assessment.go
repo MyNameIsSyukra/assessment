@@ -17,7 +17,7 @@ import (
 // }
 
 type Assessment struct {
-    ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+    ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"assessment_id"`
     Name      string    `json:"name"`
     Description string `json:"description"`
     StartTime time.Time `json:"start_time"`
@@ -28,7 +28,7 @@ type Assessment struct {
     ClassID   uuid.UUID `gorm:"type:uuid" json:"class_id"`
 
     // Relasi ke Question (Assessment has many Questions)
-    Questions []Question `gorm:"foreignKey:EvaluationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"questions,omitempty"`
+    Questions []Question `gorm:"foreignKey:AssessmentID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"questions,omitempty"`
     // Relasi ke Submission (Assessment has many Submissions)
     Submissions []Submission `gorm:"foreignKey:AssessmentID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"submissions,omitempty"`
 }

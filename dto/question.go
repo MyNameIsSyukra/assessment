@@ -8,7 +8,7 @@ import (
 )
 
 type CreateAllQuestionRequest struct {
-	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id" binding:"required"`
+	AssessmentID uuid.UUID `gorm:"type:uuid" json:"assessment_id" binding:"required"`
 	Questions []AllQuestionRequest `json:"questions" binding:"required,dive"`
 }
 type AllQuestionRequest struct{
@@ -16,32 +16,20 @@ type AllQuestionRequest struct{
 	Choices []ChoiceCreateRequest `json:"choices" binding:"required,dive"`
 }
 
-// type CreateAllQuestionRequest struct{
-// 	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
-// 	Data []CreateAllQuestionData `json:"data"`
-// }
-
-type UpdateAllQuestionRequest struct{
-	QuestionText string `json:"question_text"`
-	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
-	Choices []ChoiceUpdateRequest `json:"choices"`
-}
-
 type QuestionCreateRequest struct {
 	QuestionText string `json:"question_text"`
-	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
+	AssessmentID uuid.UUID `gorm:"type:uuid" json:"assessment_id"`
 }
 
 
 type QuestionUpdateRequest struct {
-	Id           uuid.UUID `json:"id" binding:"required"`
+	QuestionId           uuid.UUID `json:"question_id" binding:"required"`
 	QuestionText string `json:"question_text"`
-	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id" binding:"required"`
 	Choices      []ChoiceCreateRequest `json:"choices" binding:"required,dive"`
 }
 
 type QuestionResponse struct {
-	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
+	AssessmentID uuid.UUID `gorm:"type:uuid" json:"assessment_id"`
 	ID           uuid.UUID `json:"question_id"`
 	QuestionText string `json:"question_text"`
 	CreatedAt   time.Time `json:"created_at"`

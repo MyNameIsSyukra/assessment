@@ -17,7 +17,7 @@ type (
 		CreateAnswer(ctx context.Context, answer *dto.AnswerCreateRequest) (dto.AnswerResponse, error)
 		GetAllAnswers(ctx context.Context) ([]entities.Answer, error)
 		GetAnswerByID(ctx context.Context, id uuid.UUID) (*entities.Answer, error)
-		UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error)
+		UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*dto.AnswerUpdatedResponse, error)
 		GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error)
 		GetAnswerBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error)
 		// GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
@@ -95,16 +95,16 @@ func (answerService *answerService) GetAnswerByID(ctx context.Context, id uuid.U
 	return answer, nil	
 }
 
-func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*entities.Answer, error) {
+func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*dto.AnswerUpdatedResponse, error) {
 	answ,err := answerService.answerRepo.GetAnswerByID(ctx, nil, answer.ID)
 	if err != nil {
 		return nil, utils.ErrGetAnswerByID
 	}
 	if answ == nil {
-		return &entities.Answer{}, utils.ErrGetAnswerByID
+		return &dto.AnswerUpdatedResponse{}, utils.ErrGetAnswerByID
 	}
 	if answ.Submission.Status != "in_progress" {
-		return &entities.Answer{}, errors.New("submission is not in progress")
+		return &dto.AnswerUpdatedResponse{}, errors.New("submission is not in progress")
 	}
 	data := entities.Answer{
 		ID: answ.ID,
@@ -114,9 +114,17 @@ func (answerService *answerService) UpdateAnswer(ctx context.Context, answer *dt
 	}
 	updatedAnswer, err := answerService.answerRepo.UpdateAnswer(ctx, nil, &data)
 	if err != nil {
-		return &entities.Answer{}, utils.ErrUpdateAnswer
+		return &dto.AnswerUpdatedResponse{}, utils.ErrUpdateAnswer
 	}
-	return updatedAnswer, nil
+	return &dto.AnswerUpdatedResponse{
+		ID: updatedAnswer.ID,
+		QuestionID: updatedAnswer.QuestionID,
+		ChoiceID: updatedAnswer.ChoiceID,
+		SubmissionID: updatedAnswer.SubmissionID,
+		CreatedAt: updatedAnswer.CreatedAt,
+		UpdatedAt: updatedAnswer.UpdatedAt,
+		DeletedAt: updatedAnswer.DeletedAt,
+	}, nil
 }
 
 func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error) {

@@ -11,7 +11,7 @@ type ChoiceCreateRequest struct {
 }
 
 type ChoiceUpdateRequest struct {
-	ID        uuid.UUID `json:"id" binding:"required"`
+	ID        uuid.UUID `json:"choice_id" binding:"required"`
 	ChoiceText string `json:"choice_text" binding:"required"`
 	IsCorrect  bool   `json:"is_correct"`
 	QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id" binding:"required"`

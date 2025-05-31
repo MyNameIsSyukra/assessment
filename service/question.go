@@ -19,7 +19,7 @@ type (
 		UpdateQuestion(ctx context.Context, question *dto.QuestionUpdateRequest) (*entities.Question, error)
 		DeleteQuestion(ctx context.Context, id uuid.UUID) error
 		GetQuestionsByAssessmentID(ctx context.Context, assessmentID uuid.UUID) ([]entities.Question, error)
-		CreatePertanyaan(ctx context.Context, evaluationID uuid.UUID, question dto.AllQuestionRequest) (dto.QuestionResponse, error)
+		CreatePertanyaan(ctx context.Context, AssessmentID uuid.UUID, question dto.AllQuestionRequest) (dto.QuestionResponse, error)
 	}
 	questionService struct {
 		questionRepo repository.QuestionRepository
@@ -36,9 +36,9 @@ func NewQuestionService(questionRepo repository.QuestionRepository, assesRepo re
 	}
 }
 
-func (questionService *questionService) CreatePertanyaan(ctx context.Context, evaluationID uuid.UUID, question dto.AllQuestionRequest) (dto.QuestionResponse, error) {
+func (questionService *questionService) CreatePertanyaan(ctx context.Context, AssessmentID uuid.UUID, question dto.AllQuestionRequest) (dto.QuestionResponse, error) {
 	// Check if the assessment exists
-	assesment, err := questionService.assesRepo.GetAssessmentByID(ctx, nil, evaluationID)
+	assesment, err := questionService.assesRepo.GetAssessmentByID(ctx, nil, AssessmentID)
 	if assesment == nil {
 		return dto.QuestionResponse{}, errors.New("assessment not found")
 	}
@@ -46,7 +46,7 @@ func (questionService *questionService) CreatePertanyaan(ctx context.Context, ev
 		return dto.QuestionResponse{}, err
 	}
 	questionEntity := entities.Question{
-		EvaluationID: evaluationID,
+		AssessmentID: AssessmentID,
 		QuestionText: question.QuestionText,
 	}
 
@@ -81,7 +81,7 @@ func (questionService *questionService) CreatePertanyaan(ctx context.Context, ev
 func (questionService *questionService) CreateQuestion(ctx context.Context, question *dto.QuestionCreateRequest) (dto.QuestionResponse, error) {
 		questionEntity := entities.Question{
 			QuestionText: question.QuestionText,
-			EvaluationID: question.EvaluationID,
+			AssessmentID: question.AssessmentID,
 		}
 		
 		createdQuestion, err := questionService.questionRepo.CreateQuestion(ctx, nil, &questionEntity)
@@ -108,7 +108,7 @@ func (questionService *questionService) GetQuestionByID(ctx context.Context, id 
 }
 
 func (questionService *questionService) UpdateQuestion(ctx context.Context, question *dto.QuestionUpdateRequest) (*entities.Question, error) {
-	questionEntity, err := questionService.questionRepo.GetQuestionByID(ctx, nil, question.Id)
+	questionEntity, err := questionService.questionRepo.GetQuestionByID(ctx, nil, question.QuestionId)
 	// fmt.Println(questionEntity
 	if err != nil {
 		return &entities.Question{}, err
@@ -117,7 +117,6 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	data := entities.Question{
 		ID: questionEntity.ID,
 		QuestionText: question.QuestionText,
-		EvaluationID: question.EvaluationID,
 	}
 	// fmt.Println(question)
 	_, err = questionService.questionRepo.UpdateQuestion(ctx, nil, &data)
@@ -125,7 +124,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 		return &entities.Question{}, err
 	}
 
-	err = questionService.choiceRepo.DeleteChoiceByQuestionID(ctx, nil, question.Id)
+	err = questionService.choiceRepo.DeleteChoiceByQuestionID(ctx, nil, question.QuestionId)
 	if err != nil {
 		return nil, err
 	}

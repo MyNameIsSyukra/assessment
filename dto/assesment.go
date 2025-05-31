@@ -18,7 +18,7 @@ type AssessmentCreateRequest struct {
 }
 
 type AssessmentCreateResponse struct {
-	ID uuid.UUID `json:"id"`
+	ID uuid.UUID `json:"assessment_id"`
 	Name string `json:"name"`
 	Description string `json:"description"`
 	ClassId uuid.UUID `json:"class_id"`
@@ -34,7 +34,7 @@ type GetAllAssessmentsResponse struct {
 }
 
 type AssessmentUpdateRequest struct {
-	IdEvaluation uuid.UUID `json:"id" binding:"required"`
+	Assessment_id uuid.UUID `json:"assessment_id" binding:"required"`
 	Name string `json:"name"`
 	Description string `json:"description"`
 	ClassId uuid.UUID `json:"class_id"`
@@ -46,7 +46,7 @@ type AssessmentUpdateRequest struct {
 
 
 type  StudentGetAllAssesmentByClassIDResponse struct {
-	ID        uuid.UUID `gorm:"type:uuid" json:"id"`
+	ID        uuid.UUID `gorm:"type:uuid" json:"assessment_id"`
     Name      string    `json:"name"`
     StartTime time.Time `json:"start_time"`
     EndTime   time.Time `json:"end_time"`
@@ -72,19 +72,18 @@ type GetAssessmentByIDAndByUserIDResponse struct {
 	SubmittedAnswer int `json:"submitted_answer"`
 	Question int `json:"question"`
 	SubmissionStatus entities.ExamStatus `json:"submission_status"`
-	SubmissionID *uuid.UUID `json:"submission_id,omitempty"`
+	SubmissionID *uuid.UUID `json:"submission_id"`
 }
 
 // Teacher
 type GetAssesmentByIDResponseTeacher struct{
-	ID        uuid.UUID `gorm:"type:uuid" json:"id"`
+	ID        uuid.UUID `gorm:"type:uuid" json:"assessment_id"`
     Name      string    `json:"name"`
     StartTime time.Time `json:"start_time"`
     EndTime   time.Time `json:"end_time"`
     Duration int       `json:"duration"` // in Second
 	TotalSubmission int `json:"total_submission"`
 	TotalStudent int `json:"total_student"`
-	// Questions []entities.Question `json:"questions"`
 }
 
 type GetMemberResponse struct {

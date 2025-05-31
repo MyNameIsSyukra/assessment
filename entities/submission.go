@@ -7,7 +7,7 @@ import (
 )
 
 type Submission struct {
-	ID           uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ID           uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"submission_id"`
 	UserID       uuid.UUID      `gorm:"type:uuid" json:"user_id"`
 	AssessmentID uuid.UUID      `gorm:"type:uuid" json:"assessment_id"`
 	EndedTime	time.Time      `json:"ended_time"`
@@ -18,7 +18,7 @@ type Submission struct {
 	CreatedAt time.Time `json:"created_at"`
 	
 	Assessment *Assessment `gorm:"foreignKey:AssessmentID;references:ID" json:"assessment,omitempty"`
-	Answers    []Answer    `gorm:"foreignKey:SubmissionID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers,omitempty"`
+	Answers    []Answer    `gorm:"foreignKey:SubmissionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers,omitempty"`
 }
 
 type ExamStatus string

@@ -121,10 +121,7 @@ func (s *submissionService) CreateSubmission(ctx context.Context, submission *dt
 	}
 
 	// Check if submission already exists
-	_, exists, err := s.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID, submission.UserID)
-	if err != nil {
-		return dto.SubmissionCreateResponse{}, fmt.Errorf("failed to check existing submission: %w", err)
-	}
+	_, exists, _ := s.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID, submission.UserID)
 	if exists {
 		return dto.SubmissionCreateResponse{}, errors.New("submission already exists")
 	}

@@ -124,7 +124,7 @@ func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *g
 		return &entities.Submission{}, err
 	}
 	err = tx.Model(&entities.Question{}).
-	    Where("evaluation_id = ?", submission.AssessmentID).
+	    Where("assessment_id = ?", submission.AssessmentID).
 	    Count(&totalQuestions).Error
 	if err != nil {
 	    return &entities.Submission{}, err

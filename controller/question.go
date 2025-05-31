@@ -42,7 +42,7 @@ func (questionController *questionController) CreateAllQuestion(ctx *gin.Context
 	}
 
 	for _, choice := range request.Questions {
-		data, err := questionController.questionService.CreatePertanyaan(ctx.Request.Context(), request.EvaluationID, choice)
+		data, err := questionController.questionService.CreatePertanyaan(ctx.Request.Context(), request.AssessmentID, choice)
 		if err != nil {
 			res := utils.FailedResponse(err.Error())
 			ctx.JSON(http.StatusBadRequest, res)

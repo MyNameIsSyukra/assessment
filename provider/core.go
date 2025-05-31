@@ -17,7 +17,7 @@ func InitDatabase(injector *do.Injector) {
 	})
 }
 
-func ProvideEvaluationDependencies(injector *do.Injector){
+func ProvideAssessmentDependencies(injector *do.Injector){
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
 
 	assesmentRepository := repository.NewAssessmentRepository(db)
@@ -81,7 +81,7 @@ func ProvideSubmissionDependencies(injector *do.Injector){
 
 func RegisterDependencies(injector *do.Injector) {
 	InitDatabase(injector)
-	ProvideEvaluationDependencies(injector)
+	ProvideAssessmentDependencies(injector)
 	ProvideQuestionDependencies(injector)
 	ProvideAnswerDependencies(injector)
 	ProvideChoiceDependencies(injector)

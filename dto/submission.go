@@ -13,7 +13,7 @@ type SubmissionCreateRequest struct {
 }
 
 type SubmissionCreateResponse struct {
-	ID           uuid.UUID      `gorm:"type:uuid" json:"id"`
+	ID           uuid.UUID      `gorm:"type:uuid" json:"submission_id"`
 	UserID       uuid.UUID      `gorm:"type:uuid" json:"user_id"`
 	AssessmentID uuid.UUID      `gorm:"type:uuid" json:"assessment_id"`
 	EndedTime	time.Time      `json:"ended_time"`
@@ -22,7 +22,7 @@ type SubmissionCreateResponse struct {
 
 
 type GetSubmissionStudentResponse struct {
-	ID        *uuid.UUID `gorm:"type:uuid" json:"id,omitempty"`
+	ID        *uuid.UUID `gorm:"type:uuid" json:"submission_id,omitempty"`
 	Username  string    `json:"username"`
 	User_userID uuid.UUID `gorm:"type:uuid" json:"user_user_id"`
 	PhotoUrl string    `json:"photo_url"`

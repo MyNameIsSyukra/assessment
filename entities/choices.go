@@ -17,7 +17,7 @@ import (
 // }
 
 type Choice struct {
-    ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+    ID         uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"choice_id"`
     ChoiceText string    `json:"choice_text"`
     QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id"`
     IsCorrect  bool      `json:"is_correct"`

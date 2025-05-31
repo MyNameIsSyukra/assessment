@@ -115,7 +115,7 @@ func GetAssessmentTemplates() []AssessmentTemplate {
 			Name:        "Quiz HTML & CSS Dasar",
 			Description: "Quiz tentang konsep dasar HTML dan CSS untuk pemrograman web",
 			ClassID:     ClassWebProgID,
-			Duration:    60,
+			Duration:    3600,
 			Questions: []QuestionTemplate{
 				{
 					Text: "Apa fungsi utama dari tag HTML <div>?",
@@ -150,7 +150,7 @@ func GetAssessmentTemplates() []AssessmentTemplate {
 			Name:        "Quiz JavaScript & DOM",
 			Description: "Quiz tentang JavaScript dan manipulasi DOM",
 			ClassID:     ClassWebProgID,
-			Duration:    90,
+			Duration:    3600,
 			Questions: []QuestionTemplate{
 				{
 					Text: "Method JavaScript mana yang digunakan untuk mengambil elemen berdasarkan ID?",
@@ -178,7 +178,7 @@ func GetAssessmentTemplates() []AssessmentTemplate {
 			Name:        "Quiz SQL Dasar",
 			Description: "Quiz tentang perintah SQL dasar dan relational database",
 			ClassID:     ClassDatabaseID,
-			Duration:    75,
+			Duration:    3600,
 			Questions: []QuestionTemplate{
 				{
 					Text: "Perintah SQL mana yang digunakan untuk mengambil data dari database?",
@@ -213,7 +213,7 @@ func GetAssessmentTemplates() []AssessmentTemplate {
 			Name:        "Quiz Database Design",
 			Description: "Quiz tentang perancangan database dan normalisasi",
 			ClassID:     ClassDatabaseID,
-			Duration:    90,
+			Duration:    3600,
 			Questions: []QuestionTemplate{
 				{
 					Text: "Apa tujuan utama dari normalisasi database?",
@@ -241,7 +241,7 @@ func GetAssessmentTemplates() []AssessmentTemplate {
 			Name:        "Quiz Algoritma Sorting",
 			Description: "Quiz tentang algoritma pengurutan data",
 			ClassID:     ClassAlgorithmID,
-			Duration:    60,
+			Duration:    3600,
 			Questions: []QuestionTemplate{
 				{
 					Text: "Kompleksitas waktu rata-rata dari algoritma Quick Sort adalah?",
@@ -276,7 +276,7 @@ func GetAssessmentTemplates() []AssessmentTemplate {
 			Name:        "Quiz Struktur Data",
 			Description: "Quiz tentang berbagai struktur data dan penggunaannya",
 			ClassID:     ClassAlgorithmID,
-			Duration:    75,
+			Duration:    3600,
 			Questions: []QuestionTemplate{
 				{
 					Text: "Struktur data mana yang menggunakan prinsip LIFO (Last In First Out)?",
@@ -335,7 +335,7 @@ func SeedAssessmentData(db *gorm.DB) {
 		for _, questionTemplate := range template.Questions {
 			question := entities.Question{
 				QuestionText: questionTemplate.Text,
-				EvaluationID: assessment.ID,
+				AssessmentID: assessment.ID,
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			}
@@ -453,7 +453,7 @@ func SeedSubmissionsAndAnswers(db *gorm.DB, assessments []entities.Assessment, s
 			if status == entities.StatusSubmitted {
 				// Get questions for this assessment
 				var questions []entities.Question
-				db.Where("evaluation_id = ?", assessment.ID).Find(&questions)
+				db.Where("assessment_id = ?", assessment.ID).Find(&questions)
 				
 				totalQuestions := len(questions)
 				correctAnswers := 0
