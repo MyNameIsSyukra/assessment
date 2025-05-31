@@ -24,12 +24,13 @@ type SubmissionCreateResponse struct {
 type GetSubmissionStudentResponse struct {
 	ID        *uuid.UUID `gorm:"type:uuid" json:"id,omitempty"`
 	Username  string    `json:"username"`
-	Role  Role `json:"role"`
 	User_userID uuid.UUID `gorm:"type:uuid" json:"user_user_id"`
+	PhotoUrl string    `json:"photo_url"`
+	Role  Role `json:"role"`
 	Kelas_kelasID uuid.UUID `gorm:"type:uuid" json:"kelas_kelas_id"`
 	Status entities.ExamStatus `json:"status"`
-	Score  float64       `json:"score"`
-	TimeRemaining *int64        `json:"time_remaining"`
+	Score  int       `json:"score"`
+	TimeRemaining *int        `json:"time_remaining"`
 }
 
 type Role string

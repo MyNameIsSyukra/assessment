@@ -309,6 +309,7 @@ func (s *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Cont
 			User_userID:   member.User_userID,
 			Kelas_kelasID: member.Kelas_kelasID,
 			Role:          member.Role,
+			PhotoUrl:      fmt.Sprintf("%s/storage/user_profile_pictures/%s",os.Getenv("GATEWAY_URL"), member.User_userID.String()),
 		}
 		
 		if submission, hasSubmission := submissionMap[member.User_userID]; hasSubmission {
@@ -317,7 +318,7 @@ func (s *submissionService) GetStudentSubmissionsByAssessmentID(ctx context.Cont
 			// No submission found
 			response.ID = nil
 			response.Status = defaultStatus
-			response.TimeRemaining = nil
+			response.TimeRemaining = &assessment.Duration
 			response.Score = 0
 		}
 		
@@ -365,7 +366,7 @@ func (s *submissionService) populateSubmissionResponse(response *dto.GetSubmissi
 	switch submission.Status {
 	case "in_progress":
 		now := time.Now()
-		duration := int64(submission.EndedTime.Sub(now).Seconds())
+		duration := int(submission.EndedTime.Sub(now).Seconds())
 		if duration < 0 {
 			duration = 0
 		}
@@ -373,13 +374,13 @@ func (s *submissionService) populateSubmissionResponse(response *dto.GetSubmissi
 		response.ID = &submission.ID
 		response.Status = submission.Status
 		response.TimeRemaining = &duration
-		response.Score = submission.Score
+		response.Score = int(submission.Score)
 		
 	case "submitted":
 		response.ID = &submission.ID
 		response.Status = submission.Status
 		response.TimeRemaining = nil
-		response.Score = submission.Score
+		response.Score = int(submission.Score)
 		
 	case "todo":
 		response.ID = nil

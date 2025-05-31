@@ -41,9 +41,9 @@ type QuestionUpdateRequest struct {
 }
 
 type QuestionResponse struct {
-	ID           uuid.UUID `json:"id"`
-	QuestionText string `json:"question_text"`
 	EvaluationID uuid.UUID `gorm:"type:uuid" json:"evaluation_id"`
+	ID           uuid.UUID `json:"question_id"`
+	QuestionText string `json:"question_text"`
 	CreatedAt   time.Time `json:"created_at"`
 	ChoiceResponse []ChoiceResponse `json:"choices"`
 }
