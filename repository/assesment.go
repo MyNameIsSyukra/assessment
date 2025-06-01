@@ -89,6 +89,7 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 		data.ClassID = assessments[i].ClassID
 		data.ID = assessments[i].ID
 		data.Name = assessments[i].Name
+		data.Description = assessments[i].Description
 		data.Duration = assessments[i].Duration
 		data.StartTime = assessments[i].StartTime
 		data.EndTime = assessments[i].EndTime
