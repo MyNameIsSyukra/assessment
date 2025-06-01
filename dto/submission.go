@@ -22,7 +22,7 @@ type SubmissionCreateResponse struct {
 
 
 type GetSubmissionStudentResponse struct {
-	ID        *uuid.UUID `gorm:"type:uuid" json:"submission_id,omitempty"`
+	ID        *uuid.UUID `gorm:"type:uuid" json:"submission_id"`
 	Username  string    `json:"username"`
 	User_userID uuid.UUID `gorm:"type:uuid" json:"user_user_id"`
 	PhotoUrl string    `json:"photo_url"`

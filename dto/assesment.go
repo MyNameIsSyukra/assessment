@@ -48,13 +48,14 @@ type AssessmentUpdateRequest struct {
 type  StudentGetAllAssesmentByClassIDResponse struct {
 	ID        uuid.UUID `gorm:"type:uuid" json:"assessment_id"`
     Name      string    `json:"name"`
+	Description string `json:"description"`
+    ClassID   uuid.UUID `gorm:"type:uuid" json:"class_id"`
     StartTime time.Time `json:"start_time"`
     EndTime   time.Time `json:"end_time"`
 	Duration  int       `json:"duration"`
     CreatedAt time.Time `json:"date_created"`
     UpdatedAt time.Time `json:"updated_at"`
-    ClassID   uuid.UUID `gorm:"type:uuid" json:"class_id"`
-	SubmissionID *uuid.UUID `json:"submission_id,omitempty"`
+	SubmissionID *uuid.UUID `json:"submission_id"`
 	SubmissionStatus entities.ExamStatus  `json:"submission_status"`
 }
 

@@ -7,7 +7,7 @@ import (
 type ChoiceCreateRequest struct {
 	ChoiceText string    `json:"choice_text" binding:"required"`
 	IsCorrect  bool      `json:"is_correct"`
-	QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id,omitempty"`
+	QuestionID uuid.UUID `gorm:"type:uuid" json:"question_id"`
 }
 
 type ChoiceUpdateRequest struct {
