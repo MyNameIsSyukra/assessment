@@ -13,9 +13,9 @@ func Assessment(route *gin.Engine, injector *do.Injector) {
 	routes := route.Group("teacher/assessment")
 	{
 		routes.POST("", asssessmentController.CreateAssessment)
-		routes.GET("/", asssessmentController.TeacherGetAssessmentByID)
-		routes.PUT("/", asssessmentController.UpdateAssessment)
-		routes.DELETE("/", asssessmentController.DeleteAssessment)
+		routes.GET("", asssessmentController.TeacherGetAssessmentByID)
+		routes.PUT("/update", asssessmentController.UpdateAssessment)
+		routes.DELETE("/delete", asssessmentController.DeleteAssessment)
 		routes.GET("/class/", asssessmentController.GetAllAssesmentByClassID)
 	}
 

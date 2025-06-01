@@ -6,7 +6,6 @@ import (
 	repository "assesment/repository"
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -128,7 +127,6 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("after delete choice") // hanya muncul jika delete sukses
 	for _, choice := range question.Choices {
 		data := entities.Choice{
 			ChoiceText: choice.ChoiceText,
@@ -167,7 +165,7 @@ func (questionService *questionService) GetQuestionsByAssessmentID(ctx context.C
 		return []entities.Question{}, err
 	}
 	if len(questions) == 0 {
-		return []entities.Question{}, errors.New("no questions found for this assessment")
+		return []entities.Question{}, err
 	}
 	return questions, nil
 }
