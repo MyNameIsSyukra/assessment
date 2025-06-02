@@ -74,6 +74,6 @@ type ContinueSubmissionIDResponse struct {
 	Assessment_ID uuid.UUID `json:"assessment_id"`
 	SubmissionID uuid.UUID `json:"submission_id"`
 	User_ID     uuid.UUID `json:"user_id"`
-	EndedTime    time.Time `json:"end_time"`
+	EndedTime    time.Time `json:"ended_time"`
 	Question []QuestionsSubmittedAnswer `json:"questions"`
 }
