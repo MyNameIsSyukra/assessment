@@ -67,7 +67,7 @@ type QuestionsSubmittedAnswer struct {
     UpdatedAt    time.Time `json:"updated_at"`
     DeletedAt    gorm.DeletedAt `json:"deleted_at"`
 	Choice []entities.Choice `json:"choices"`
-	Answers *Answer `json:"answers"`
+	Answers *Answer `json:"submitted_answers"`
 }
 
 type ContinueSubmissionIDResponse struct {
