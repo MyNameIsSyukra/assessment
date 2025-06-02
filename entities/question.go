@@ -15,7 +15,7 @@ type Question struct {
     UpdatedAt    time.Time `json:"updated_at"`
     DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at"`
     // Relasi ke Assessment
-    Assessment Assessment `gorm:"foreignKey:AssessmentID;references:ID" json:"-"`
+    Assessment Assessment `gorm:"foreignKey:AssessmentID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 
     // Relasi ke Choice (Question has many Choices)
     Choices []Choice `gorm:"foreignKey:QuestionID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"choice"`

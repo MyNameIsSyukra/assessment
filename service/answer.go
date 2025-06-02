@@ -7,9 +7,11 @@ import (
 	"assesment/utils"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type (
@@ -19,21 +21,23 @@ type (
 		GetAnswerByID(ctx context.Context, id uuid.UUID) (*entities.Answer, error)
 		UpdateAnswer(ctx context.Context, answer *dto.AnswerUpdateRequest) (*dto.AnswerUpdatedResponse, error)
 		GetAnswerByQuestionID(ctx context.Context, questionID uuid.UUID) ([]entities.Answer, error)
-		GetAnswerBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error)
+		ContinueSubmission(ctx context.Context, submissionID uuid.UUID) (*dto.ContinueSubmissionIDResponse, error)
 		// GetAnswerByStudentID(ctx context.Context, id dto.GetAnswerByStudentIDRequest) ([]entities.Answer, error)
 	}
 	answerService struct {
 		answerRepo     repository.AnswerRepository
 		submissionRepo repository.SubmissionRepository
 		assesmentRepo repository.AssessmentRepository
+		questionRepo repository.QuestionRepository
 	}
 )
 
-func NewAnswerService(answerRepo repository.AnswerRepository,submissionRepo repository.SubmissionRepository, assesmentRepo repository.AssessmentRepository) AnswerService {
+func NewAnswerService(answerRepo repository.AnswerRepository,submissionRepo repository.SubmissionRepository, assesmentRepo repository.AssessmentRepository, questionRepo repository.QuestionRepository) AnswerService {
 	return &answerService{
 		answerRepo: answerRepo,
 		submissionRepo: submissionRepo,
 		assesmentRepo: assesmentRepo,
+		questionRepo: questionRepo,
 	}
 }
 
@@ -135,10 +139,83 @@ func (answerService *answerService) GetAnswerByQuestionID(ctx context.Context, q
 	return answers, nil
 }
 
-func (answerService *answerService) GetAnswerBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]dto.GetAnswerBySubmissionIDResponse, error) {
-	answer, err := answerService.answerRepo.GetAnswerBySubmissionID(ctx, nil, submissionID)
-	if err != nil {
-		return []dto.GetAnswerBySubmissionIDResponse{}, utils.ErrGetAnswerBySubmissionID
+func (answerService *answerService) ContinueSubmission(ctx context.Context, submissionID uuid.UUID) (*dto.ContinueSubmissionIDResponse, error) {
+	// Validate input
+	if submissionID == uuid.Nil {
+		return nil, errors.New("invalid submission ID")
 	}
-	return answer, nil
-}	
+
+	// Get submission
+	submission, err := answerService.submissionRepo.GetSubmissionByID(ctx, nil, submissionID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("submission not found")
+		}
+		return nil, fmt.Errorf("failed to get submission: %w", err)
+	}
+
+	// Check submission status
+	if submission.Status != "in_progress" {
+		return nil, errors.New("submission is not in progress")
+	}
+
+	// Get answers for this submission
+	answers, err := answerService.answerRepo.GetAnswerBySubmissionID(ctx, nil, submissionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get answers: %w", err)
+	}
+
+	// Get questions for the assessment
+	questions, err := answerService.questionRepo.GetQuestionsByAssessmentID(ctx, nil, submission.AssessmentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get questions: %w", err)
+	}
+
+	// Create answer lookup map for better performance
+	answerMap := make(map[uuid.UUID]*entities.Answer)
+	for i := range answers {
+		answerMap[answers[i].QuestionID] = &answers[i]
+	}
+
+	// Build response
+	questionsSubmittedAnswer := make([]dto.QuestionsSubmittedAnswer, 0, len(questions))
+	
+	for _, q := range questions {
+		questionAnswer := dto.QuestionsSubmittedAnswer{
+			QuestionID:   q.ID,
+			QuestionText: q.QuestionText,
+			AssessmentID: q.AssessmentID,
+			CreatedAt:    q.CreatedAt,
+			UpdatedAt:    q.UpdatedAt,
+			DeletedAt:    q.DeletedAt,
+			Choice:       q.Choices, // Assuming Choices is a slice of entities.Choice
+		}
+
+		// Check if answer exists for this question
+		if answerFound, exists := answerMap[q.ID]; exists {
+			// Handle potential nil pointer issue
+
+			questionAnswer.Answers = &dto.Answer{
+				ID:           answerFound.ID,
+				QuestionID:   answerFound.QuestionID,
+				ChoiceID:     answerFound.ChoiceID,
+				ChoiceText:   answerFound.Choice.ChoiceText,
+				SubmissionID: answerFound.SubmissionID,
+				CreatedAt:    answerFound.CreatedAt,
+				UpdatedAt:    answerFound.UpdatedAt,
+				DeletedAt:    answerFound.DeletedAt,
+			}
+		}
+		// If no answer found, Answers will remain nil
+
+		questionsSubmittedAnswer = append(questionsSubmittedAnswer, questionAnswer)
+	}
+
+	return &dto.ContinueSubmissionIDResponse{
+		Assessment_ID: submission.AssessmentID,
+		User_ID:       submission.UserID,
+		SubmissionID:  submissionID,
+		EndedTime:     submission.EndedTime,
+		Question:      questionsSubmittedAnswer,
+	}, nil
+}

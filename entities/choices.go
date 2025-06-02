@@ -27,7 +27,7 @@ type Choice struct {
 
 
     // Relasi ke Question
-    Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"-"`
+    Question Question `gorm:"foreignKey:QuestionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 
     // Relasi ke Answer (Choice has many Answers)
     Answers []Answer `gorm:"foreignKey:ChoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`

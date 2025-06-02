@@ -129,12 +129,9 @@ func (submissionRepo *submissionRepository) Submitted(ctx context.Context, tx *g
 	if err != nil {
 	    return &entities.Submission{}, err
 	}
-
-	print("count", countIsCorrect)
-	print("total", totalQuestions)
 	submission.Score = float64(countIsCorrect) / float64(totalQuestions) * 100
 	// submission.Score = score
-	if err := submissionRepo.Db.Save(submission).Error; err != nil {
+	if err := submissionRepo.Db.Updates(submission).Error; err != nil {
 		return &entities.Submission{}, err
 	}
 

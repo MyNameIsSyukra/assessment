@@ -49,7 +49,8 @@ func ProvideAnswerDependencies(injector *do.Injector){
 	answerRepository := repository.NewAnswerRepository(db)
 	submissionRepository := repository.NewSubmissionRepository(db)
 	assesmentRepository := repository.NewAssessmentRepository(db)
-	answerService := service.NewAnswerService(answerRepository, submissionRepository, assesmentRepository)
+	questionRepository := repository.NewQuestionRepository(db)
+	answerService := service.NewAnswerService(answerRepository, submissionRepository, assesmentRepository, questionRepository)
 	do.Provide(injector, func (i *do.Injector) (controller.AnswerController, error){
 		return controller.NewAnswerController(answerService),nil
 	})

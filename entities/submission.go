@@ -17,7 +17,7 @@ type Submission struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	CreatedAt time.Time `json:"created_at"`
 	
-	Assessment *Assessment `gorm:"foreignKey:AssessmentID;references:ID" json:"assessment,omitempty"`
+	Assessment *Assessment `gorm:"foreignKey:AssessmentID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"assessment,omitempty"`
 	Answers    []Answer    `gorm:"foreignKey:SubmissionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"answers,omitempty"`
 }
 

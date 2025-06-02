@@ -50,7 +50,8 @@ func (submissionController *submissionController) CreateSubmission(ctx *gin.Cont
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	ctx.JSON(http.StatusCreated, submission)
+	res := utils.SuccessResponse(submission)
+	ctx.JSON(http.StatusCreated, res)
 }
 
 func (submissionController *submissionController) GetAllSubmissions(ctx *gin.Context) {
@@ -95,55 +96,65 @@ func (submissionController *submissionController) DeleteSubmission(ctx *gin.Cont
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	res := utils.SuccessResponse("submission deleted successfully")
-	ctx.JSON(http.StatusNoContent, res)
+	res := utils.SuccessResponse(nil)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (submissionController *submissionController) GetSubmissionsByUserID(ctx *gin.Context) {
 	userID,err := uuid.Parse(ctx.Query("user_id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse("invalid user ID format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	submissions, err := submissionController.submissionService.GetSubmissionsByUserID(ctx.Request.Context(), userID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError,res)
 		return
 	}
-	ctx.JSON(http.StatusOK, submissions)
+	res := utils.SuccessResponse(submissions)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (submissionController *submissionController) GetSubmissionsByAssessmentIDAndUserID(ctx *gin.Context) {
 	assessmentID,err := uuid.Parse(ctx.Query("assessment_id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	userID,err := uuid.Parse(ctx.Query("user_id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	submission, err := submissionController.submissionService.GetSubmissionsByAssessmentIDAndUserID(ctx.Request.Context(), assessmentID, userID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, submission)
+	res := utils.SuccessResponse(submission)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (submissionController *submissionController) Submitted(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Query("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	submission, err := submissionController.submissionService.Submitted(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		res := utils.FailedResponse(err.Error())
+		ctx.JSON(http.StatusInternalServerError, res)
 		return
 	}
-	ctx.JSON(http.StatusOK, submission)
+	res := utils.SuccessResponse(submission)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (submissionController *submissionController)GetStudentSubmissionsByAssessmentID(ctx *gin.Context)(){

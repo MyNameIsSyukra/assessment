@@ -27,13 +27,13 @@ type Answer struct {
     DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
     
     // Relasi ke Question
-    Question Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
+    Question Question `gorm:"foreignKey:QuestionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"question,omitempty"`
     
     // Relasi ke Choice
-    Choice Choice `gorm:"foreignKey:ChoiceID;references:ID" json:"choice"`
+    Choice Choice `gorm:"foreignKey:ChoiceID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"choice,omitempty"`
     
     // Relasi ke Submission
-    Submission Submission `gorm:"foreignKey:SubmissionID;references:ID" json:"submission"`
+    Submission Submission `gorm:"foreignKey:SubmissionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"submission,omitempty"`
 }
 
 // StudentID  uuid.UUID `gorm:"type:uuid" json:"student_id"`

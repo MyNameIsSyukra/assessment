@@ -1,7 +1,7 @@
 package dto
 
 import (
-	entities "assesment/entities"
+	"assesment/entities"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,12 +48,32 @@ type ChoiceGetAnswerBySubmissionIDResponse struct{
     DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
 
-type GetAnswerBySubmissionIDResponse struct {
-	ID         uuid.UUID `gorm:"type:uuid" json:"answer_id"`
-	SubmissionID uuid.UUID `gorm:"type:uuid" json:"submission_id"`
-	IdQuestion uuid.UUID `gorm:"type:uuid" json:"question_id"`
-	IdChoice   uuid.UUID `gorm:"type:uuid" json:"choice_id"`
+type Answer struct {
+	ID         uuid.UUID `json:"answer_id"`
+	QuestionID uuid.UUID `json:"question_id"`
+	ChoiceID   uuid.UUID `json:"choice_id"`
+	ChoiceText string `json:"choice_text"`
+	SubmissionID uuid.UUID `json:"submission_id"`
 	CreatedAt  time.Time `json:"created_at"`
-	Question entities.Question `gorm:"foreignKey:QuestionID;references:ID" json:"question"`
-	Choice ChoiceGetAnswerBySubmissionIDResponse `gorm:"foreignKey:ChoiceID;references:ID" json:"choice"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `json:"deleted_at"`
+}
+
+type QuestionsSubmittedAnswer struct {
+	QuestionID	 uuid.UUID `json:"question_id"`
+    QuestionText string    `json:"question_text"`
+    AssessmentID uuid.UUID `json:"assessment_id"`
+    CreatedAt    time.Time `json:"created_at"`
+    UpdatedAt    time.Time `json:"updated_at"`
+    DeletedAt    gorm.DeletedAt `json:"deleted_at"`
+	Choice []entities.Choice `json:"choices"`
+	Answers *Answer `json:"answers"`
+}
+
+type ContinueSubmissionIDResponse struct {
+	Assessment_ID uuid.UUID `json:"assessment_id"`
+	SubmissionID uuid.UUID `json:"submission_id"`
+	User_ID     uuid.UUID `json:"user_id"`
+	EndedTime    time.Time `json:"end_time"`
+	Question []QuestionsSubmittedAnswer `json:"questions"`
 }

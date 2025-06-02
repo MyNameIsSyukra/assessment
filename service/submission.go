@@ -119,7 +119,10 @@ func (s *submissionService) CreateSubmission(ctx context.Context, submission *dt
 	if err := s.checkClassMembership(ctx, assessment.ClassID, submission.UserID); err != nil {
 		return dto.SubmissionCreateResponse{}, err
 	}
-
+	// Check if assessment is active
+	if time.Now().Before(assessment.StartTime) || time.Now().After(assessment.EndTime) {
+		return dto.SubmissionCreateResponse{}, errors.New("assessment is not active")
+	}
 	// Check if submission already exists
 	_, exists, _ := s.submissionRepo.GetSubmissionsByAssessmentIDAndUserID(ctx, nil, submission.AssessmentID, submission.UserID)
 	if exists {
@@ -254,6 +257,7 @@ func (s *submissionService) Submitted(ctx context.Context, submissionID uuid.UUI
 		ID:           submission.ID,
 		UserID:       submission.UserID,
 		AssessmentID: submission.AssessmentID,
+		SubmittedAt: time.Now(),
 		Status:       "submitted",
 	}
 	
@@ -476,7 +480,7 @@ func (s *SubmissionScheduler) Stop() {
 
 // Background worker as alternative/backup
 func (s *submissionService) StartAutoSubmitWorker(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour * 1)
+	ticker := time.NewTicker(time.Minute * 1)
 	go func() {
 		defer ticker.Stop()
 		
