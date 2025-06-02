@@ -26,6 +26,13 @@ func args(db *gorm.DB) bool {
 			print("Seeding completed successfully")
 		return false
 		}
+		if (os.Args[1] == "rollback") {
+			if err := migration.Rollback(db); err != nil {
+				log.Fatalf("error rolling back migrations: %v", err)
+			}
+			log.Println("Rollback completed successfully")
+			return false
+		}
     }
 	
     return true

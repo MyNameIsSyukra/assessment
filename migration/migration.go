@@ -14,3 +14,22 @@ func Migrate(db *gorm.DB) error{
 	
 	return nil
 }
+
+func Rollback(db *gorm.DB) error {
+	if err := db.Migrator().DropTable(&entities.Answer{}); err != nil {
+		return err
+	}
+	if err := db.Migrator().DropTable(&entities.Choice{}); err != nil {
+		return err
+	}
+	if err := db.Migrator().DropTable(&entities.Assessment{}); err != nil {
+		return err
+	}
+	if err := db.Migrator().DropTable(&entities.Question{}); err != nil {
+		return err
+	}
+	if err := db.Migrator().DropTable(&entities.Submission{}); err != nil {
+		return err
+	}
+	return nil
+}
