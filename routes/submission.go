@@ -15,7 +15,7 @@ func Submission(route *gin.Engine, injector *do.Injector) {
 		routes.POST("", submissionController.CreateSubmission)
 		// routes.GET("", submissionController.GetAllSubmissions)
 		routes.GET("/", submissionController.GetSubmissionByID)
-		routes.GET("/user/", submissionController.GetSubmissionsByUserID)
+		// routes.GET("/user/", submissionController.GetSubmissionsByUserID)
 		routes.POST("/submit/", submissionController.Submitted)
 	}
 	

@@ -37,14 +37,23 @@ func NewSubmissionController(submissionService service.SubmissionService) Submis
 }
 
 func (submissionController *submissionController) CreateSubmission(ctx *gin.Context) {
-	var request dto.SubmissionCreateRequest
+	var request dto.InitSubmissionCreateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-
-	submission, err := submissionController.submissionService.CreateSubmission(ctx.Request.Context(), &request)
+	claims, err := DecodeJWTToken(ctx)
+	if err != nil {
+		res := utils.FailedResponse("unauthorized access")
+		ctx.JSON(http.StatusUnauthorized, res)
+		return
+	}
+	req := dto.SubmissionCreateRequest{
+		UserID:       uuid.MustParse(claims.UserID),
+		AssessmentID: request.AssessmentID,
+	}
+	submission, err := submissionController.submissionService.CreateSubmission(ctx.Request.Context(), &req)
 	if err != nil {
 		res := utils.FailedResponse(err.Error())
 		ctx.JSON(http.StatusBadRequest, res)
@@ -101,7 +110,13 @@ func (submissionController *submissionController) DeleteSubmission(ctx *gin.Cont
 }
 
 func (submissionController *submissionController) GetSubmissionsByUserID(ctx *gin.Context) {
-	userID,err := uuid.Parse(ctx.Query("user_id"))
+	claims, err := DecodeJWTToken(ctx)
+	if err != nil {
+		res := utils.FailedResponse("unauthorized access")
+		ctx.JSON(http.StatusUnauthorized, res)
+		return
+	}
+	userID,err := uuid.Parse(claims.UserID)
 	if err != nil {
 		res := utils.FailedResponse("invalid user ID format")
 		ctx.JSON(http.StatusBadRequest, res)
@@ -124,7 +139,8 @@ func (submissionController *submissionController) GetSubmissionsByAssessmentIDAn
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	userID,err := uuid.Parse(ctx.Query("user_id"))
+	claims, err := DecodeJWTToken(ctx)
+	userID,err := uuid.Parse(claims.UserID)
 	if err != nil {
 		res := utils.FailedResponse(err.Error())
 		ctx.JSON(http.StatusBadRequest, res)

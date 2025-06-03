@@ -135,7 +135,13 @@ func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	userID,err := uuid.Parse(ctx.Query("userID"))
+	claims, err := DecodeJWTToken(ctx)
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	userID, err := uuid.Parse(claims.UserID)
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -158,7 +164,13 @@ func (assesmentController *assesmentController) StudentGetAllAssesmentByClassIDA
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	userID,err := uuid.Parse(ctx.Query("userID"))
+	claims, err := DecodeJWTToken(ctx)
+	if err != nil {
+		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+	userID, err := uuid.Parse(claims.UserID)	
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)

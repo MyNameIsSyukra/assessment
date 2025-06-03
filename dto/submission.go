@@ -7,8 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
+
+type InitSubmissionCreateRequest struct {
+	AssessmentID uuid.UUID `json:"assessment_id" binding:"required"`
+}
+
 type SubmissionCreateRequest struct {
-	UserID	   uuid.UUID `json:"user_id" binding:"required"`
+	UserID       uuid.UUID `json:"user_id" binding:"required"`
 	AssessmentID uuid.UUID `json:"assessment_id" binding:"required"`
 }
 
