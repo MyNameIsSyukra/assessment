@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"assesment/entities"
 	"time"
 
 	"github.com/google/uuid"
@@ -66,7 +65,7 @@ type QuestionsSubmittedAnswer struct {
     CreatedAt    time.Time `json:"created_at"`
     UpdatedAt    time.Time `json:"updated_at"`
     DeletedAt    gorm.DeletedAt `json:"deleted_at"`
-	Choice []entities.Choice `json:"choices"`
+	Choice []PublicChoiceResponse `json:"choices"`
 	Answers *Answer `json:"submitted_answers"`
 }
 

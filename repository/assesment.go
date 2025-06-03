@@ -144,12 +144,12 @@ func (assesmentRepo *assesmentRepository) GetAssessmentByIDAndByUserID(ctx conte
 		response.TimeSpent = nil
 	}else if submission.Status == entities.StatusInProgress{
 		timeremain := submission.EndedTime.Sub(time.Now())
-		timeremain = timeremain.Round(time.Second)
+		timeremain = time.Duration(timeremain.Seconds())
 		if timeremain < 0 {
 			timeremain = 0
 		}
 		timeSpent := time.Now().Sub(submission.CreatedAt)
-		timeSpent = timeSpent.Round(time.Second)
+		timeSpent = time.Duration(timeSpent.Seconds())
 		response.Assessment = assessmentWithoutQuestions
 		response.MaxScore = 100
 		response.Question = len(assessment.Questions)

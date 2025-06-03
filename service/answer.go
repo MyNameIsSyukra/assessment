@@ -181,6 +181,10 @@ func (answerService *answerService) ContinueSubmission(ctx context.Context, subm
 	questionsSubmittedAnswer := make([]dto.QuestionsSubmittedAnswer, 0, len(questions))
 	
 	for _, q := range questions {
+		choices := make([]dto.PublicChoiceResponse, len(q.Choices))
+		for i, choice := range q.Choices {
+			choices[i] = dto.ToChoiceResponse(choice)
+		}
 		questionAnswer := dto.QuestionsSubmittedAnswer{
 			QuestionID:   q.ID,
 			QuestionText: q.QuestionText,
@@ -188,7 +192,7 @@ func (answerService *answerService) ContinueSubmission(ctx context.Context, subm
 			CreatedAt:    q.CreatedAt,
 			UpdatedAt:    q.UpdatedAt,
 			DeletedAt:    q.DeletedAt,
-			Choice:       q.Choices, // Assuming Choices is a slice of entities.Choice
+			Choice:       choices, // Assuming Choices is a slice of entities.Choice
 		}
 
 		// Check if answer exists for this question

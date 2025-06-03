@@ -146,6 +146,7 @@ func (s *submissionService) CreateSubmission(ctx context.Context, submission *dt
 		questions = nil
 	}
 
+
 	// Create submission
 	createdSubmission, err := s.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
 	if err != nil {
@@ -163,7 +164,7 @@ func (s *submissionService) CreateSubmission(ctx context.Context, submission *dt
 		UserID:       createdSubmission.UserID,
 		AssessmentID: createdSubmission.AssessmentID,
 		EndedTime:    createdSubmission.EndedTime,
-		Question:     questions,
+		Question:     dto.ToQuestionResponses(questions),
 	}, nil
 }
 

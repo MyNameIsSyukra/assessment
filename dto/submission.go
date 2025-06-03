@@ -17,7 +17,7 @@ type SubmissionCreateResponse struct {
 	UserID       uuid.UUID      `gorm:"type:uuid" json:"user_id"`
 	AssessmentID uuid.UUID      `gorm:"type:uuid" json:"assessment_id"`
 	EndedTime	time.Time      `json:"ended_time"`
-	Question []entities.Question `json:"question"`
+	Question []PublicQuestionResponse `json:"question"`
 }
 
 
