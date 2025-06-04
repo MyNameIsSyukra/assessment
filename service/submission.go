@@ -145,8 +145,10 @@ func (s *submissionService) CreateSubmission(ctx context.Context, submission *dt
 		fmt.Printf("Warning: failed to get questions: %v\n", err)
 		questions = nil
 	}
-
-
+	if len(questions) == 0 {
+		return dto.SubmissionCreateResponse{}, errors.New("no questions found for this assessment, please contact your teacher")
+	}
+	
 	// Create submission
 	createdSubmission, err := s.submissionRepo.CreateSubmission(ctx, nil, &submissionEntity)
 	if err != nil {
