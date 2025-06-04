@@ -13,11 +13,11 @@ type (
 	QuestionRepository interface {
 		CreateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (dto.QuestionResponse, error)
 		GetQuestionByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*entities.Question, error)
-		GetAllQuestions() (dto.GetAllQuestionsResponse, error)
 		UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error)
 		DeleteQuestion(ctx context.Context, tx *gorm.DB, id uuid.UUID) error
 		GetQuestionsByAssessmentID(ctx context.Context, tx *gorm.DB, assessmentID uuid.UUID) ([]entities.Question, error)
 		CreateChoice(ctx context.Context, tx *gorm.DB, choice *entities.Choice) (*entities.Choice, error)
+		// GetAllQuestions() (dto.GetAllQuestionsResponse, error)
 	}
 	questionRepository struct {
 		Db *gorm.DB
@@ -57,15 +57,15 @@ func (questionRepo *questionRepository) GetQuestionByID(ctx context.Context, tx 
 	return &question, nil
 }
 
-func (questionRepo *questionRepository) GetAllQuestions() (dto.GetAllQuestionsResponse, error) {
-	var questions []entities.Question
-	if err := questionRepo.Db.Find(&questions).Error; err != nil {
-		return dto.GetAllQuestionsResponse{}, err
-	}
-	return dto.GetAllQuestionsResponse{
-		Questions: questions,
-	}, nil
-}
+// func (questionRepo *questionRepository) GetAllQuestions() (dto.GetAllQuestionsResponse, error) {
+// 	var questions []entities.Question
+// 	if err := questionRepo.Db.Find(&questions).Error; err != nil {
+// 		return dto.GetAllQuestionsResponse{}, err
+// 	}
+// 	return dto.GetAllQuestionsResponse{
+// 		Questions: questions,
+// 	}, nil
+// }
 
 func (questionRepo *questionRepository) UpdateQuestion(ctx context.Context, tx *gorm.DB, question *entities.Question) (*entities.Question, error) {
 	if err := questionRepo.Db.Where("id = ?", question.ID).Updates(question).Error; err != nil {

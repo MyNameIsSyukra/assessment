@@ -6,6 +6,7 @@ import (
 	repository "assesment/repository"
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -13,7 +14,7 @@ import (
 type (
 	QuestionService interface {
 		CreateQuestion(ctx context.Context, question *dto.QuestionCreateRequest) (dto.QuestionResponse, error)
-		GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error)
+		// GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error)
 		GetQuestionByID(ctx context.Context, id uuid.UUID) (*entities.Question, error)
 		UpdateQuestion(ctx context.Context, question *dto.QuestionUpdateRequest) (*entities.Question, error)
 		DeleteQuestion(ctx context.Context, id uuid.UUID) error
@@ -48,8 +49,9 @@ func (questionService *questionService) CreatePertanyaan(ctx context.Context, As
 		AssessmentID: AssessmentID,
 		QuestionText: question.QuestionText,
 	}
-
-
+	if assesment.StartTime.After(time.Now()) || assesment.EndTime.Before(time.Now()) {
+		return dto.QuestionResponse{}, errors.New("assessment is already started or ended")
+	}
 	createdQuestion, err := questionService.questionRepo.CreateQuestion(ctx, nil, &questionEntity)
 	if err != nil {
 		return dto.QuestionResponse{}, err
@@ -90,13 +92,13 @@ func (questionService *questionService) CreateQuestion(ctx context.Context, ques
 		return createdQuestion, nil	
 }
 
-func (questionService *questionService) GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error) {
-	questions, err := questionService.questionRepo.GetAllQuestions()
-	if err != nil {
-		return dto.GetAllQuestionsResponse{}, err
-	}
-	return questions, nil
-}
+// func (questionService *questionService) GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error) {
+// 	questions, err := questionService.questionRepo.GetAllQuestions()
+// 	if err != nil {
+// 		return dto.GetAllQuestionsResponse{}, err
+// 	}
+// 	return questions, nil
+// }
 
 func (questionService *questionService) GetQuestionByID(ctx context.Context, id uuid.UUID) (*entities.Question, error) {
 	question, err := questionService.questionRepo.GetQuestionByID(ctx, nil, id)
@@ -116,6 +118,13 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 	data := entities.Question{
 		ID: questionEntity.ID,
 		QuestionText: question.QuestionText,
+	}
+	assesment, err := questionService.assesRepo.GetAssessmentByID(ctx, nil, questionEntity.AssessmentID)
+	if err != nil {
+		return &entities.Question{}, err
+	}
+	if assesment.StartTime.After(time.Now()) || assesment.EndTime.Before(time.Now()) {
+		return &entities.Question{}, errors.New("assessment is already started or ended")
 	}
 	// fmt.Println(question)
 	_, err = questionService.questionRepo.UpdateQuestion(ctx, nil, &data)

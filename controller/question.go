@@ -13,7 +13,7 @@ import (
 type (
 	QuestionController interface {
 		CreateQuestion(ctx *gin.Context)
-		GetAllQuestions(ctx *gin.Context)
+		// GetAllQuestions(ctx *gin.Context)
 		GetQuestionByID(ctx *gin.Context)
 		UpdateQuestion(ctx *gin.Context)
 		DeleteQuestion(ctx *gin.Context)
@@ -73,16 +73,16 @@ func (questionController *questionController) CreateQuestion(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, res)
 }	
 
-func (questionController *questionController) GetAllQuestions(ctx *gin.Context) {
-	questions, err := questionController.questionService.GetAllQuestions(ctx.Request.Context())
-	if err != nil {
-		res := utils.FailedResponse(err.Error())
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	res := utils.SuccessResponse(questions)
-	ctx.JSON(http.StatusOK, res)
-}
+// func (questionController *questionController) GetAllQuestions(ctx *gin.Context) {
+// 	questions, err := questionController.questionService.GetAllQuestions(ctx.Request.Context())
+// 	if err != nil {
+// 		res := utils.FailedResponse(err.Error())
+// 		ctx.JSON(http.StatusBadRequest, res)
+// 		return
+// 	}
+// 	res := utils.SuccessResponse(questions)
+// 	ctx.JSON(http.StatusOK, res)
+// }
 
 func (questionController *questionController) GetQuestionByID(ctx *gin.Context) {
 	id,err := uuid.Parse(ctx.Query("id"))
