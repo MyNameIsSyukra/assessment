@@ -124,7 +124,7 @@ func (questionService *questionService) UpdateQuestion(ctx context.Context, ques
 		return &entities.Question{}, err
 	}
 	if assesment.StartTime.After(time.Now()) || assesment.EndTime.Before(time.Now()) {
-		return &entities.Question{}, errors.New("assessment is already started or ended")
+		return &entities.Question{}, errors.New("cannot edit question, assessment is already started or ended")
 	}
 	// fmt.Println(question)
 	_, err = questionService.questionRepo.UpdateQuestion(ctx, nil, &data)
