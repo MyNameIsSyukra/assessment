@@ -49,7 +49,7 @@ func (questionService *questionService) CreatePertanyaan(ctx context.Context, As
 		AssessmentID: AssessmentID,
 		QuestionText: question.QuestionText,
 	}
-	if assesment.StartTime.After(time.Now()) || assesment.EndTime.Before(time.Now()) {
+	if time.Now().After(assesment.StartTime) || assesment.EndTime.Before(time.Now()) {
 		return dto.QuestionResponse{}, errors.New("assessment is already started or ended")
 	}
 	createdQuestion, err := questionService.questionRepo.CreateQuestion(ctx, nil, &questionEntity)
@@ -91,14 +91,6 @@ func (questionService *questionService) CreateQuestion(ctx context.Context, ques
 		}
 		return createdQuestion, nil	
 }
-
-// func (questionService *questionService) GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error) {
-// 	questions, err := questionService.questionRepo.GetAllQuestions()
-// 	if err != nil {
-// 		return dto.GetAllQuestionsResponse{}, err
-// 	}
-// 	return questions, nil
-// }
 
 func (questionService *questionService) GetQuestionByID(ctx context.Context, id uuid.UUID) (*entities.Question, error) {
 	question, err := questionService.questionRepo.GetQuestionByID(ctx, nil, id)
@@ -179,3 +171,11 @@ func (questionService *questionService) GetQuestionsByAssessmentID(ctx context.C
 	return questions, nil
 }
 
+
+// func (questionService *questionService) GetAllQuestions(ctx context.Context) (dto.GetAllQuestionsResponse, error) {
+// 	questions, err := questionService.questionRepo.GetAllQuestions()
+// 	if err != nil {
+// 		return dto.GetAllQuestionsResponse{}, err
+// 	}
+// 	return questions, nil
+// }

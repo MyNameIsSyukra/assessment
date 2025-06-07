@@ -54,13 +54,13 @@ func (answerService *answerService) CreateAnswer(ctx context.Context, answer *dt
 		return dto.AnswerResponse{}, errors.New("submission has ended")
 	}
 	
-	assement, err := answerService.assesmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
-	if err != nil {
-		return dto.AnswerResponse{}, utils.ErrCreateAnswer
-	}
-	if time.Now().After(assement.EndTime) {
-		return dto.AnswerResponse{}, errors.New("assesment has ended")
-	}
+	// assement, err := answerService.assesmentRepo.GetAssessmentByID(ctx, nil, submission.AssessmentID)
+	// if err != nil {
+	// 	return dto.AnswerResponse{}, utils.ErrCreateAnswer
+	// }
+	// if time.Now().After(assement.EndTime) {
+	// 	return dto.AnswerResponse{}, errors.New("assesment has ended")
+	// }
 	
 	answerExists, err := answerService.answerRepo.GetAnswerBySubmissionIDAndQuestionID(ctx, nil, answer.SubmisiionID, answer.IdQuestion)
 	if err != nil {
