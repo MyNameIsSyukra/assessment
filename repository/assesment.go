@@ -80,12 +80,6 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 	for i := range assessments {
 		var data dto.StudentGetAllAssesmentByClassIDResponse
 		// check if the assessment is submitted by the user
-		var submission entities.Submission
-		if err := assesmentRepo.Db.Where("assessment_id = ? AND user_id = ?", assessments[i].ID, userID).First(&submission).Error; err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return nil, err
-			}
-		}
 		data.ClassID = assessments[i].ClassID
 		data.ID = assessments[i].ID
 		data.Name = assessments[i].Name
@@ -95,6 +89,13 @@ func (assesmentRepo *assesmentRepository) StudentGetAllAssesmentByClassIDAndUser
 		data.EndTime = assessments[i].EndTime
 		data.CreatedAt = assessments[i].CreatedAt
 		data.UpdatedAt = assessments[i].UpdatedAt
+		var submission entities.Submission
+		if err := assesmentRepo.Db.Where("assessment_id = ? AND user_id = ?", assessments[i].ID, userID).First(&submission).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				data.SubmissionID = nil
+				data.SubmissionStatus = entities.StatusTodo
+			}
+		}
 		if submission.ID != uuid.Nil {
 			data.SubmissionID = &submission.ID
 			data.SubmissionStatus = submission.Status

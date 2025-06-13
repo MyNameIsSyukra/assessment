@@ -43,14 +43,17 @@ func (submissionController *submissionController) CreateSubmission(ctx *gin.Cont
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	claims, err := DecodeJWTToken(ctx)
+	tokenUserID := ctx.MustGet("uuid").(string)
+	
+	userID,err := uuid.Parse(tokenUserID)
 	if err != nil {
-		res := utils.FailedResponse("unauthorized access")
-		ctx.JSON(http.StatusUnauthorized, res)
+		res := utils.FailedResponse("invalid user ID format")
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
+
 	req := dto.SubmissionCreateRequest{
-		UserID:       uuid.MustParse(claims.UserID),
+		UserID:       userID,
 		AssessmentID: request.AssessmentID,
 	}
 	submission, err := submissionController.submissionService.CreateSubmission(ctx.Request.Context(), &req)
@@ -110,13 +113,8 @@ func (submissionController *submissionController) DeleteSubmission(ctx *gin.Cont
 }
 
 func (submissionController *submissionController) GetSubmissionsByUserID(ctx *gin.Context) {
-	claims, err := DecodeJWTToken(ctx)
-	if err != nil {
-		res := utils.FailedResponse("unauthorized access")
-		ctx.JSON(http.StatusUnauthorized, res)
-		return
-	}
-	userID,err := uuid.Parse(claims.UserID)
+	tokenUserID := ctx.MustGet("uuid").(string)
+	userID, err := uuid.Parse(tokenUserID)
 	if err != nil {
 		res := utils.FailedResponse("invalid user ID format")
 		ctx.JSON(http.StatusBadRequest, res)
@@ -139,13 +137,15 @@ func (submissionController *submissionController) GetSubmissionsByAssessmentIDAn
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	claims, err := DecodeJWTToken(ctx)
-	userID,err := uuid.Parse(claims.UserID)
+	tokenUserID := ctx.MustGet("uuid").(string)
+	
+	userID, err := uuid.Parse(tokenUserID)
 	if err != nil {
-		res := utils.FailedResponse(err.Error())
+		res := utils.FailedResponse("invalid user ID format")
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
+
 	submission, err := submissionController.submissionService.GetSubmissionsByAssessmentIDAndUserID(ctx.Request.Context(), assessmentID, userID)
 	if err != nil {
 		res := utils.FailedResponse(err.Error())

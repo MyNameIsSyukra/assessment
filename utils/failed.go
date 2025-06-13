@@ -3,6 +3,9 @@ package utils
 import "errors"
 
 const (
+	MESSAGE_FAILED_TOKEN_NOT_VALID = "token not valid"
+	MESSAGE_FAILED_TOKEN_NOT_FOUND = "token not found"
+
 	FailedGetDataFromBody		 = "failed to get data from body"
 	FailedCreateAssessment         = "failed to create assessment"
 	FailedGetAllAssessments        = "failed to get all assessments"

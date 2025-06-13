@@ -2,6 +2,8 @@ package routes
 
 import (
 	controller "assesment/controller"
+	"assesment/middleware"
+	"assesment/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
@@ -9,21 +11,21 @@ import (
 
 func Submission(route *gin.Engine, injector *do.Injector) {
 	submissionController := do.MustInvoke[controller.SubmissionController](injector)
-
+	jwtService := do.MustInvokeNamed[service.JWTService](injector, "jwtService")
 	routes := route.Group("/submission")
 	{
-		routes.POST("", submissionController.CreateSubmission)
+		routes.POST("",middleware.Authenticate(jwtService), submissionController.CreateSubmission)
 		// routes.GET("", submissionController.GetAllSubmissions)
-		routes.GET("/", submissionController.GetSubmissionByID)
+		routes.GET("/",middleware.Authenticate(jwtService), submissionController.GetSubmissionByID)
 		// routes.GET("/user/", submissionController.GetSubmissionsByUserID)
-		routes.POST("/submit/", submissionController.Submitted)
+		routes.POST("/submit/",middleware.Authenticate(jwtService), submissionController.Submitted)
 	}
 	
 	// teacher
 	routes = route.Group("assement/submission")
 	{
-		routes.GET("/",submissionController.GetStudentSubmissionsByAssessmentID)
-		routes.DELETE("/", submissionController.DeleteSubmission)
+		routes.GET("/",middleware.Authenticate(jwtService),submissionController.GetStudentSubmissionsByAssessmentID)
+		routes.DELETE("/",middleware.Authenticate(jwtService), submissionController.DeleteSubmission)
 	}
 }
 

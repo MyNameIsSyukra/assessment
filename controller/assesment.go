@@ -5,6 +5,7 @@ import (
 	service "assesment/service"
 	"assesment/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -79,6 +80,12 @@ func (assesmentController *assesmentController) CreateAssessment(ctx *gin.Contex
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
+	// Check form data
+	if request.Start_time.Before(time.Now()) || request.End_time.Before(request.Start_time) {
+		res := utils.FailedResponse("Invalid time range: Start time must be in the future and End time must be after Start time.")
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
 
 	assesment, err := assesmentController.assesmentService.CreateAssessment(ctx.Request.Context(), &request)
 	if err != nil {
@@ -94,6 +101,12 @@ func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Contex
 	var request dto.AssessmentUpdateRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if request.Start_time.Before(time.Now()) || request.End_time.Before(request.Start_time) {
+		res := utils.FailedResponse("Invalid time range: Start time must be in the future and End time must be after Start time.")
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
@@ -135,13 +148,8 @@ func (assesmentController *assesmentController) GetAssessmentByIDAndUserID(ctx *
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	claims, err := DecodeJWTToken(ctx)
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	userID, err := uuid.Parse(claims.UserID)
+	tokenUserID := ctx.MustGet("uuid").(string)
+	userID, err := uuid.Parse(tokenUserID)
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)
@@ -164,13 +172,8 @@ func (assesmentController *assesmentController) StudentGetAllAssesmentByClassIDA
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	claims, err := DecodeJWTToken(ctx)
-	if err != nil {
-		res := utils.FailedResponse(utils.FailedGetDataFromBody)
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-	userID, err := uuid.Parse(claims.UserID)	
+	tokenUserID := ctx.MustGet("uuid").(string)
+	userID, err := uuid.Parse(tokenUserID)	
 	if err != nil {
 		res := utils.FailedResponse(utils.FailedGetDataFromBody)
 		ctx.JSON(http.StatusBadRequest, res)

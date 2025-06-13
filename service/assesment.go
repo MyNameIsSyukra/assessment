@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
@@ -53,35 +52,29 @@ func (assesmentService *assesmentService) GetAllAssesmentByClassID(ctx context.C
 	if err != nil {
 		return []entities.Assessment{}, err
 	}
-	if len(assessments) == 0 {
-		return []entities.Assessment{}, err
-	}
-	if assessments == nil {
-		return []entities.Assessment{}, err
-	}
 	return assessments, nil
 }
 
 // teacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacherteacher
 func (assesmentService *assesmentService) CreateAssessment(ctx context.Context, assesment *dto.AssessmentCreateRequest) (dto.AssessmentCreateResponse, error) {
-	// checl if class is exist
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
-	params := url.Values{}
-	params.Add("id", assesment.ClassId.String())
-	urlClassSerivice := os.Getenv("CLASS_SERVICE_URL")
-	url := fmt.Sprintf("%s/kelas/?%s",urlClassSerivice,params.Encode())
-	resp, err := http.Get(url)
-	if err != nil {
-		return dto.AssessmentCreateResponse{}, fmt.Errorf("error checking class existence: %v", err)
-	}
-	if resp.StatusCode != 200 {
-		return dto.AssessmentCreateResponse{}, fmt.Errorf("no class found with id %s", assesment.ClassId.String())
-	}
-	defer resp.Body.Close()
-	// Baca body response
+	// // checl if class is exist
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// params := url.Values{}
+	// params.Add("id", assesment.ClassId.String())
+	// urlClassSerivice := os.Getenv("CLASS_SERVICE_URL")
+	// url := fmt.Sprintf("%s/kelas/?%s",urlClassSerivice,params.Encode())
+	// resp, err := http.Get(url)
+	// if err != nil {
+	// 	return dto.AssessmentCreateResponse{}, fmt.Errorf("error checking class existence: %v", err)
+	// }
+	// if resp.StatusCode != 200 {
+	// 	return dto.AssessmentCreateResponse{}, fmt.Errorf("no class found with id %s", assesment.ClassId.String())
+	// }
+	// defer resp.Body.Close()
+	// // Baca body response
 	
 	assesmentEntity := entities.Assessment{
 		ClassID: assesment.ClassId,
@@ -214,12 +207,6 @@ func (assesmentService *assesmentService) DeleteAssessment(ctx context.Context, 
 // StudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudentStudent
 func (assesmentService *assesmentService) StudentGetAllAssesmentByClassIDAndUserID(ctx context.Context, classID uuid.UUID,userID uuid.UUID)([]dto.StudentGetAllAssesmentByClassIDResponse, error){
 	assessments, err := assesmentService.assesmentRepo.StudentGetAllAssesmentByClassIDAndUserID(ctx, nil, classID,userID)
-	if len(assessments) == 0 {
-		return []dto.StudentGetAllAssesmentByClassIDResponse{}, utils.ErrGetAllAssesmentByClassID
-	}
-	if assessments == nil {
-		return []dto.StudentGetAllAssesmentByClassIDResponse{}, utils.ErrGetAllAssesmentByClassID
-	}
 	if err != nil {
 		return []dto.StudentGetAllAssesmentByClassIDResponse{}, utils.ErrGetAllAssesmentByClassID
 	}
