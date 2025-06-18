@@ -15,11 +15,11 @@ func Question(route *gin.Engine, injector *do.Injector) {
 	// Teacher
 	routes := route.Group("assessment/question")
 	{
-		routes.POST("",middleware.Authenticate(jwtService), questionController.CreateAllQuestion)
+		routes.POST("",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), questionController.CreateAllQuestion)
 		// routes.GET("", questionController.GetAllQuestions)
-		routes.GET("/",middleware.Authenticate(jwtService), questionController.GetQuestionByID)
-		routes.PUT("/update",middleware.Authenticate(jwtService), questionController.UpdateQuestion)
-		routes.DELETE("/",middleware.Authenticate(jwtService), questionController.DeleteQuestion)
+		routes.GET("/",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), questionController.GetQuestionByID)
+		routes.PUT("/update",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), questionController.UpdateQuestion)
+		routes.DELETE("/",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), questionController.DeleteQuestion)
 	}
 
 	// Student

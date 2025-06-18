@@ -14,11 +14,11 @@ func Assessment(route *gin.Engine, injector *do.Injector) {
 	jwtService := do.MustInvokeNamed[service.JWTService](injector, "jwtService")
 	routes := route.Group("teacher/assessment")
 	{
-		routes.POST("",middleware.Authenticate(jwtService), asssessmentController.CreateAssessment)
-		routes.GET("",middleware.Authenticate(jwtService), asssessmentController.TeacherGetAssessmentByID)
-		routes.PUT("/update",middleware.Authenticate(jwtService), asssessmentController.UpdateAssessment)
-		routes.DELETE("/delete",middleware.Authenticate(jwtService), asssessmentController.DeleteAssessment)
-		routes.GET("/class/", middleware.Authenticate(jwtService),asssessmentController.GetAllAssesmentByClassID)
+		routes.POST("",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), asssessmentController.CreateAssessment)
+		routes.GET("",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), asssessmentController.TeacherGetAssessmentByID)
+		routes.PUT("/update",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), asssessmentController.UpdateAssessment)
+		routes.DELETE("/delete",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), asssessmentController.DeleteAssessment)
+		routes.GET("/class/", middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService),asssessmentController.GetAllAssesmentByClassID)
 	}
 
 	// Student routes

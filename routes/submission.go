@@ -24,8 +24,8 @@ func Submission(route *gin.Engine, injector *do.Injector) {
 	// teacher
 	routes = route.Group("assement/submission")
 	{
-		routes.GET("/",middleware.Authenticate(jwtService),submissionController.GetStudentSubmissionsByAssessmentID)
-		routes.DELETE("/",middleware.Authenticate(jwtService), submissionController.DeleteSubmission)
+		routes.GET("/",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService),submissionController.GetStudentSubmissionsByAssessmentID)
+		routes.DELETE("/",middleware.Authenticate(jwtService),middleware.RequireTeacherRole(jwtService), submissionController.DeleteSubmission)
 	}
 }
 
