@@ -169,6 +169,10 @@ func (assesmentService *assesmentService) UpdateAssessment(ctx context.Context, 
 	if ass.StartTime.Before(time.Now()){
 		return nil,errors.New("the assessment already started")
 	}
+
+	if assesment.Start_time.Before(time.Now()) || assesment.End_time.Before(assesment.Start_time) {
+		return nil, errors.New("Invalid time range: Start time must be in the future and End time must be after Start time.")
+	}
 	assesmentEntity := entities.Assessment{
 		ID: ass.ID,
 		ClassID: ass.ClassID,

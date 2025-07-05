@@ -105,12 +105,6 @@ func (assesmentController *assesmentController) UpdateAssessment(ctx *gin.Contex
 		return
 	}
 
-	if request.Start_time.Before(time.Now()) || request.End_time.Before(request.Start_time) {
-		res := utils.FailedResponse("Invalid time range: Start time must be in the future and End time must be after Start time.")
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-
 	assesment, err := assesmentController.assesmentService.UpdateAssessment(ctx.Request.Context(), &request)
 	if err != nil {
 		res := utils.FailedResponse(err.Error())

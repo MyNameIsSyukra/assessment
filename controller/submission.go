@@ -166,7 +166,7 @@ func (submissionController *submissionController) Submitted(ctx *gin.Context) {
 	submission, err := submissionController.submissionService.Submitted(ctx.Request.Context(), id)
 	if err != nil {
 		res := utils.FailedResponse(err.Error())
-		ctx.JSON(http.StatusInternalServerError, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	res := utils.SuccessResponse(submission)
